@@ -10,7 +10,7 @@ export const metadata = { title: "SunCard — Đổi thẻ cào, nạp game, mua
 const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT"];
 const ROLE_LINE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", OPS: "Vận hành", FINANCE: "Tài chính", SUPPORT: "Hỗ trợ", PRODUCT_MANAGER: "Sản phẩm", PROVIDER_MANAGER: "Nhà cung cấp", RISK: "Rủi ro", AUDITOR: "Kiểm toán" };
 
-const FA_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css";
+const FA_CSS = "/fontawesome/css/all.min.css";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Khu quản trị /admin dùng khung admin theme riêng (header/menu/footer riêng trong
