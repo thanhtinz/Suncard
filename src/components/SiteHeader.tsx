@@ -130,7 +130,10 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               {unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
             </button>
             {user.isStaff && (
-              <Link href="/admin" className="hidden md:block text-sm font-semibold text-navy hover:text-sundeep">Admin</Link>
+              <Link href="/admin" className="hidden sm:flex items-center gap-1.5 rounded-full bg-navy text-white text-[13px] font-bold px-3.5 py-2 shadow-[0_3px_10px_rgba(20,33,61,0.25)] hover:bg-[#1D3157] whitespace-nowrap">
+                <i className="fa-solid fa-user-gear text-[14px]" aria-hidden="true" />
+                Admin
+              </Link>
             )}
             <Link href="/tai-khoan" className="flex items-center gap-2.5 bg-white border-[1.5px] border-[#F1E0C2] rounded-full py-[5px] pl-[5px] pr-[5px] lg:pr-3.5 hover:border-[#FFB03A]">
               <span className="w-8 h-8 rounded-full flex items-center justify-center text-white font-extrabold text-sm" style={{ background: "linear-gradient(135deg,#14213D,#33507E)" }}>{user.initial}</span>
@@ -193,6 +196,16 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                 })}
               </div>
               <div className="mt-1.5">
+                {user?.isStaff && (
+                  <Link href="/admin" className="flex items-center gap-3 py-3 border-t border-[#F7EDD8]">
+                    <span className="w-[34px] h-[34px] rounded-[11px] bg-navy text-white flex items-center justify-center shrink-0"><i className="fa-solid fa-user-gear text-[16px]" aria-hidden="true" /></span>
+                    <span>
+                      <span className="block text-sm font-bold text-navy">Quản trị (Admin)</span>
+                      <span className="block text-xs font-medium text-[#A08B62] mt-0.5">Vào khu vực quản trị hệ thống</span>
+                    </span>
+                    <i className="fa-solid fa-chevron-right ml-auto shrink-0 text-[13px] text-[#C9B48A]" aria-hidden="true" />
+                  </Link>
+                )}
                 {ROWS.map((r) => (
                   <Link key={r.href + r.label} href={r.href} className="flex items-center gap-3 py-3 border-t border-[#F7EDD8]">
                     <span className="w-[34px] h-[34px] rounded-[11px] bg-[#FFF3DF] text-sundeep flex items-center justify-center shrink-0"><NavIcon k={r.icon} size={17} /></span>
