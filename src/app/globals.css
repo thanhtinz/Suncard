@@ -16,3 +16,19 @@ body { background: #FFF9F1; color: #14213D; font-family: system-ui, -apple-syste
 .text-grad-sun { background: linear-gradient(90deg, #E86A17, #F5A623); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .bg-grad-sun { background: linear-gradient(90deg, #FF8A3D, #FFB03A); }
 .bg-hero-sun { background: linear-gradient(115deg, #FFE3B3 0%, #FFD1DC 55%, #FFF3D6 100%); }
+
+/* ================= KHU QUẢN TRỊ — theme riêng hoàn toàn =================
+   Mọi style công cộng (.card/.btn/.input/.table...) bị ghi đè trong phạm vi
+   .admin-scope: nền xám nhạt, thẻ trắng viền slate, nút chính đỏ admin,
+   không còn gradient cam / bóng nắng của giao diện bán hàng. */
+.admin-scope { background: #F4F6FA; color: #1E293B; }
+.admin-scope .card { @apply bg-white rounded-xl border border-slate-200; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+.admin-scope .btn-primary { background: #D92D20; box-shadow: none; @apply text-white hover:bg-[#B42318]; border-radius: 10px; }
+.admin-scope .btn-ghost { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; border-radius: 10px; border-width: 1px; }
+.admin-scope .btn-danger { border-radius: 10px; }
+.admin-scope .input { @apply rounded-lg border border-slate-300 focus:border-[#D92D20]; border-width: 1px; }
+.admin-scope .label { @apply text-slate-700; }
+.admin-scope .table th { @apply text-slate-500 uppercase text-[11px] tracking-wide; }
+.admin-scope .table td { @apply border-slate-100; }
+.admin-scope .text-grad-sun { background: none; color: #D92D20; -webkit-background-clip: initial; background-clip: initial; }
+.admin-scope .bg-grad-sun { background: #D92D20; }

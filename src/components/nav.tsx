@@ -40,6 +40,9 @@ export const FA_ICONS: Record<string, string> = {
   gamepad: "fa-gamepad",
   user: "fa-user",
   network: "fa-diagram-project",
+  robot: "fa-robot",
+  mail: "fa-envelope",
+  trash: "fa-trash-can",
 };
 
 export function NavIcon({ k, size = 16 }: { k: string; size?: number; sw?: number }) {
