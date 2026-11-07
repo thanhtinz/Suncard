@@ -110,18 +110,18 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               <svg className="hidden sm:block" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </>)}
-          {user && (
-            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
-              <NavIcon k="bell" size={19} />
-              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
-            </Link>
-          )}
           <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}
             className={`min-[1400px]:hidden w-[39px] h-[39px] rounded-xl border-[1.5px] flex items-center justify-center shrink-0 ${open ? "bg-navy border-navy text-white" : "bg-white border-[#F1E0C2] text-navy"}`}>
             {open
               ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
               : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h10" /></svg>}
           </button>
+          {user && (
+            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
+              <NavIcon k="bell" size={19} />
+              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
+            </Link>
+          )}
         </div>
 
         {open && (
