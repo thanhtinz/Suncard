@@ -5,7 +5,9 @@ export interface VariantOpt { id: string; name: string; face: string; price: str
 export interface NamedOpt { code: string; name: string }
 const fmt = (s: string) => Number(s).toLocaleString("vi-VN") + " ₫";
 
-export default function TopupForm({ variants, regions, servers, loggedIn }: { variants: VariantOpt[]; regions: NamedOpt[]; servers: NamedOpt[]; loggedIn: boolean }) {
+export default function TopupForm({ variants, regions, servers, loggedIn, usdRate }: { variants: VariantOpt[]; regions: NamedOpt[]; servers: NamedOpt[]; loggedIn: boolean; usdRate?: number }) {
+  const [showUsd, setShowUsd] = useState(false);
+  const usd = (vnd: string) => (usdRate && usdRate > 0 ? `≈ $${(Number(vnd) / usdRate).toFixed(2)}` : "");
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [playerId, setPlayerId] = useState("");
   const [regionCode, setRegionCode] = useState(regions[0]?.code ?? "");
@@ -60,7 +62,7 @@ export default function TopupForm({ variants, regions, servers, loggedIn }: { va
         <div className="grid grid-cols-2 gap-2">
           {variants.map((v) => (
             <button type="button" key={v.id} onClick={() => setVariantId(v.id)} className={`rounded-lg border px-3 py-2 text-left text-sm ${v.id === variantId ? "border-primary bg-blue-50" : "border-slate-200 bg-white"}`}>
-              <div className="font-medium">{v.name}</div><div className="text-slate-500">{fmt(v.price)}</div>
+              <div className="font-medium">{v.name}</div><div className="text-slate-500">{fmt(v.price)}{showUsd && usdRate ? <span className="ml-2">{usd(v.price)}</span> : null}</div>
             </button>
           ))}
         </div>
@@ -70,9 +72,15 @@ export default function TopupForm({ variants, regions, servers, loggedIn }: { va
       {selected && (
         <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm space-y-1">
           <div className="flex justify-between"><span>Mệnh giá</span><span>{fmt(selected.face)}</span></div>
-          <div className="flex justify-between"><span>Giá thanh toán</span><span className="font-semibold text-primary">{fmt(selected.price)}</span></div>
+          <div className="flex justify-between"><span>Giá thanh toán</span><span className="font-semibold text-primary">{fmt(selected.price)}{showUsd && usdRate ? <span className="ml-2 font-normal text-slate-500">{usd(selected.price)}</span> : null}</span></div>
         </div>
       )}
+      {usdRate ? (
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          <input type="checkbox" checked={showUsd} onChange={(e) => setShowUsd(e.target.checked)} />
+          Hiển thị thêm giá quy đổi USD (ước tính, thanh toán vẫn bằng VND)
+        </label>
+      ) : null}
       <div><label className="label">Phương thức thanh toán</label>
         <select className="input" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
           <option value="WALLET">Số dư ví</option><option value="CREDIT">Công nợ đại lý</option>

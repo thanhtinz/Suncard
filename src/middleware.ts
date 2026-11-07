@@ -28,9 +28,8 @@ export function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
-  if (pathname.startsWith("/api/auth/login") && isWrite) {
-    if (!hit(`login:${ip}`, 30, 60000)) return NextResponse.json({ error: { code: "RATE_LIMITED", message: "Quá nhiều yêu cầu" }, request_id: "mw" }, { status: 429 });
-  }
+  // Rate limit đăng nhập: đã chuyển vào route handler (rate-limit PHÂN TÁN theo Postgres,
+  // xem src/modules/rate-limit.ts) — middleware edge không truy cập được DB nên không đếm ở đây nữa.
   if (pathname.startsWith("/api/")) {
     if (!hit(`api:${ip}:${pathname}`, 600, 60000)) {
       return NextResponse.json({ error: { code: "RATE_LIMITED", message: "Quá nhiều yêu cầu" }, request_id: "mw" }, { status: 429 });

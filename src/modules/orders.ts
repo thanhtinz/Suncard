@@ -58,7 +58,7 @@ export function statusLabel(status: string): string {
     SUBMITTING: "Đang gửi nhà cung cấp", PENDING: "Đang chờ", PROCESSING: "Đang xử lý",
     SUCCESS: "Thành công", FAILED: "Thất bại", UNKNOWN: "Đang xác minh",
     REVIEW: "Đang rà soát", REFUND_PENDING: "Đang hoàn tiền", REFUNDED: "Đã hoàn tiền",
-    CANCELLED: "Đã huỷ",
+    CANCELLED: "Đã huỷ", PENDING_GATEWAY: "Chờ cổng thanh toán",
   };
   return map[status] ?? status;
 }

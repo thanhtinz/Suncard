@@ -20,6 +20,11 @@ export async function POST(req: Request) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const ua = req.headers.get("user-agent") ?? "";
     const deviceId = String(body.deviceId ?? sha256Hex(ua + "|" + ip).slice(0, 32));
+    // Rate limit phân tán theo IP (Postgres) — thay bucket in-memory ở middleware (Phase 4).
+    const { rateLimitDistributed } = await import("@/modules/rate-limit");
+    if (!(await rateLimitDistributed(`login:${ip}`, 30))) {
+      throw new ApiError("RATE_LIMITED", 429, "Quá nhiều yêu cầu đăng nhập, vui lòng thử lại sau");
+    }
     const throttleKey = sha256Hex(`${email}|${ip}|${deviceId}`);
     const db = prisma as unknown as DB;
 

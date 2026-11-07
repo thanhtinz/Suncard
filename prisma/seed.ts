@@ -236,6 +236,15 @@ async function main() {
   // Providers MANUAL + MOCK
   const manual = await prisma.provider.create({ data: { code: "MANUAL", name: "Xử lý thủ công", type: "MANUAL", priority: 200 } });
   const mock = await prisma.provider.create({ data: { code: "MOCK", name: "Mock Sandbox", type: "MOCK", priority: 10 } });
+  // Provider gạch thẻ ra upstream theo chuẩn /chargingws/v2 (Phase 2): tạo sẵn nhưng TẮT.
+  // Admin điền config {baseUrl, partnerId, signMode} + partner_key (qua duyệt kép) rồi mới bật.
+  const httpCharging = await prisma.provider.create({
+    data: {
+      code: "HTTP_CHARGING", name: "Upstream gạch thẻ HTTP (chargingws/v2)", type: "API", priority: 50, status: "DISABLED",
+      config: JSON.stringify({ baseUrl: "", partnerId: "", signMode: "extended" }),
+    },
+  });
+  await prisma.providerCapability.create({ data: { providerId: httpCharging.id, productType: "EXCHANGE", region: "VN", currency: "VND", supported: true } });
   for (const p of [manual, mock]) {
     await prisma.providerCapability.create({ data: { providerId: p.id, productType: "GAME_TOPUP", region: "VN", currency: "VND", supported: true } });
     await prisma.providerCapability.create({ data: { providerId: p.id, productType: "EXCHANGE", region: "VN", currency: "VND", supported: true } });

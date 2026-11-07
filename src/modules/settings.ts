@@ -50,6 +50,24 @@ export const DEFAULT_SETTINGS: Record<string, { value: unknown; group: string; d
   "risk.w_refund_history": { value: 15, group: "risk", description: "Trọng số: có refund/dispute trong 30 ngày" },
   "risk.w_shared_ip": { value: 5, group: "risk", description: "Trọng số NHỎ: IP dùng chung >= 3 tài khoản — không bao giờ chặn cứng chỉ vì VPN/IP chung (spec 9)" },
   "support.sla_hours": { value: 24, group: "support", description: "SLA phản hồi ticket (giờ)" },
+  // Phase 2 — Provider HTTP (chargingws upstream) + worker nền/đối soát/cảnh báo vận hành
+  "provider.http_timeout_ms": { value: 15000, group: "provider", description: "Timeout gọi upstream HTTP_CHARGING (ms). Quá timeout sau submit -> đơn UNKNOWN, không failover" },
+  "ops.reconcile_lookback_hours": { value: 24, group: "ops", description: "Cron đối soát provider HTTP: cửa sổ nhìn lại (giờ)" },
+  "ops.unknown_alert_threshold": { value: 10, group: "ops", description: "Ngưỡng cảnh báo vận hành: số đơn UNKNOWN tồn đọng vượt mức này -> thông báo Admin" },
+  "ops.pending_inquiry_after_minutes": { value: 30, group: "ops", description: "Cron inquiry cả đơn PENDING của provider HTTP quá X phút chưa chốt" },
+  // Phase 3 — Cổng VNPay (trống secret/tmn = tắt; secret lưu mã hoá qua API riêng, không nhập plaintext ở đây)
+  "vnpay.enabled": { value: false, group: "vnpay", description: "Bật nạp ví qua VNPay (cần đủ tmn_code + hash secret đã lưu mã hoá)" },
+  "vnpay.tmn_code": { value: "", group: "vnpay", description: "VNPay TmnCode của merchant (để trống = tắt VNPay)" },
+  "vnpay.hash_secret_enc": { value: "", group: "vnpay", description: "Hash secret VNPay — CHỈ lưu dạng mã hoá AES-GCM do API /api/admin/payments/vnpay-secret ghi; không sửa tay" },
+  "vnpay.pay_url": { value: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", group: "vnpay", description: "URL cổng VNPay (sandbox hoặc production)" },
+  "vnpay.return_url": { value: "", group: "vnpay", description: "URL trả về sau thanh toán VNPay (để trống = dùng /api/payments/vnpay/return của hệ thống)" },
+  // Phase 4 — WebAuthn/Passkey
+  "webauthn.rp_id": { value: "", group: "webauthn", description: "Relying Party ID cho passkey (domain, vd suncard.vn; trống = suy từ host request)" },
+  "webauthn.rp_name": { value: "SunCard", group: "webauthn", description: "Tên hiển thị Relying Party khi đăng ký passkey" },
+  "webauthn.expected_origin": { value: "", group: "webauthn", description: "Origin kỳ vọng khi verify passkey (vd https://suncard.vn; trống = suy từ host request)" },
+  // Phase 5 — Nền đa tiền tệ (chỉ hiển thị quy đổi; tiền thật luôn VND)
+  "fx.vnd_per_usd": { value: 25000, group: "fx", description: "Tỉ giá hiển thị: số VND đổi 1 USD (giá trị mẫu, chỉ dùng quy đổi ước tính khi khách xem)" },
+  "fx.display_enabled": { value: true, group: "fx", description: "Cho phép khách bật xem giá quy đổi USD ở trang Mua thẻ/Nạp game" },
 };
 
 const cache = new Map<string, { value: unknown; at: number }>();

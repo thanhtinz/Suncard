@@ -1,5 +1,6 @@
 import { hmacSha256Hex, maskSecret, sha256Hex, timingSafeEqualHex } from "@/lib/crypto";
 import { getNumberSetting } from "./settings";
+import { HttpChargingAdapter } from "./http-charging";
 import type { DB } from "./ledger";
 
 // Provider adapter contract (doc 07). Method không hỗ trợ -> UNSUPPORTED rõ ràng.
@@ -16,7 +17,11 @@ export interface CreateOrderResult {
   rawStatus?: string;
   message?: string;
   latencyMs?: number;
+  /** Mệnh giá THẬT được upstream chấp nhận (status 2 sai mệnh giá của chargingws). */
+  acceptedValueMinor?: bigint;
 }
+
+export interface ChargingCardInput { carrier: string; serial: string; pin: string; faceValueMinor: bigint }
 
 export interface ProviderAdapter {
   code: string;
@@ -26,7 +31,7 @@ export interface ProviderAdapter {
   getProducts(db: DB): Promise<unknown>;
   getPrice(db: DB, externalSku: string): Promise<bigint | "UNSUPPORTED">;
   validatePlayer(db: DB, input: { productId: string; playerId: string; region?: string; server?: string }): Promise<ValidatePlayerResult | "UNSUPPORTED">;
-  createOrder(db: DB, input: { orderId: string; externalSku?: string; playerId?: string; amountMinor: bigint; variantId?: string }): Promise<CreateOrderResult>;
+  createOrder(db: DB, input: { orderId: string; externalSku?: string; playerId?: string; amountMinor: bigint; variantId?: string; card?: ChargingCardInput }): Promise<CreateOrderResult>;
   getOrderStatus(db: DB, externalRef: string): Promise<CreateOrderResult>;
   cancelOrder(db: DB, externalRef: string): Promise<{ cancelled: boolean } | "UNSUPPORTED">;
   processWebhook(db: DB, payload: unknown, signatureOk: boolean): Promise<{ eventId: string; status: ProviderOrderStatus; externalRef?: string } | "UNSUPPORTED">;
@@ -106,7 +111,7 @@ export const ManualProvider: ProviderAdapter = {
 export function getAdapter(code: string): ProviderAdapter {
   if (code === "MOCK") return MockProvider;
   if (code === "MANUAL") return ManualProvider;
-  // Provider API thật cần hợp đồng/sandbox riêng — chưa tích hợp ở bản này.
+  if (code === "HTTP_CHARGING") return HttpChargingAdapter;
   throw new Error(`PROVIDER_ADAPTER_NOT_IMPLEMENTED:${code}`);
 }
 

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PageTitle, DataTable, StatusBadge } from "@/components/ui";
+import ProviderConfigForm from "./provider-config-form";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           h ? `${h.success}/${h.total} thành công · trễ TB ${h.avgLatencyMs}ms · mạch ${h.circuitState}` : "Chưa có dữ liệu"];
       })} />
       <p className="text-sm text-slate-500 mt-4">Định tuyến: hệ thống chọn nhà cung cấp theo thứ tự ưu tiên tăng dần trong nhóm ACTIVE có năng lực phù hợp; khi mạch (circuit) mở do lỗi liên tiếp, nhà cung cấp sẽ tạm bị bỏ qua đến khi hồi phục.</p>
+      <ProviderConfigForm providers={providers.map((p) => ({ id: p.id, code: p.code, type: p.type, status: p.status, config: typeof p.config === "string" ? p.config : p.config ? JSON.stringify(p.config) : null }))} />
     </div>
   );
 }

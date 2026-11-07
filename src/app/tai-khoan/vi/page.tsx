@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/modules/security";
 import { PageTitle, Money, DataTable, StatusBadge, Empty } from "@/components/ui";
 import { DepositForm, TransferForm, WithdrawForm } from "./form";
+import VnpayDepositForm from "./vnpay-form";
+import { vnpayEnabled } from "@/modules/vnpay";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,11 @@ export default async function WalletPage({ searchParams }: { searchParams?: { pa
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         <DepositForm /><TransferForm /><WithdrawForm />
       </div>
+      {(await vnpayEnabled()) && (
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <VnpayDepositForm />
+        </div>
+      )}
       <h2 className="font-bold text-navy mb-3">Yêu cầu nạp tiền gần đây</h2>
       <div className="mb-6"><DataTable cols={["Thời gian", "Phương thức", "Số tiền", "Trạng thái"]} rows={deposits.map((d) => [d.createdAt.toLocaleString("vi-VN"), d.method, <Money key="m" v={d.amountMinor} />, <StatusBadge key="s" status={d.status} />])} /></div>
       <h2 className="font-bold text-navy mb-3">Yêu cầu rút tiền gần đây</h2>

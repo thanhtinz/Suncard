@@ -6,8 +6,7 @@ import {
   buildChargingResponse, chargingMessage, ipAllowed, callbackSign,
 } from "@/modules/charging";
 import { maskSecret } from "@/lib/crypto";
-import { submitExchange, settleExchange, rejectExchange } from "@/modules/orders-service";
-import { getSetting } from "@/modules/settings";
+import { submitExchange, finalizeExchangeViaProvider } from "@/modules/orders-service";
 
 // Charging Compat API — POST (và GET) /chargingws/v2, command=charging|check.
 // Response JSON đúng format thị trường (không bọc envelope của SunCard).
@@ -91,19 +90,9 @@ async function handle(req: Request) {
     if (!order) return errResp(100, requestId);
 
     if (!duplicated) {
-      const providerCode = String(await getSetting("exchange.provider_code", "MOCK"));
-      if (providerCode === "MOCK") {
-        if (code.endsWith("000")) {
-          await rejectExchange(order.id, "Thẻ lỗi hoặc đã sử dụng (mock)", "charging");
-        } else if (code.endsWith("111")) {
-          const lower = denoms.filter((d) => d < BigInt(amount));
-          if (lower.length === 0) await rejectExchange(order.id, "Sai mệnh giá không xác định (mock)", "charging");
-          else await settleExchange(order.id, lower[lower.length - 1], "charging");
-        } else {
-          await settleExchange(order.id, BigInt(amount), "charging");
-        }
-      }
+      // MOCK: kịch bản sandbox; HTTP_CHARGING: đẩy tiếp sang upstream thật;
       // MANUAL: giữ PENDING (99), Admin duyệt ở hàng chờ gạch thẻ.
+      await finalizeExchangeViaProvider(order.id, { carrier: telco, serial, pin: code, faceValueMinor: BigInt(amount) }, "charging");
     }
     const fresh = await prisma.order.findUnique({ where: { id: order.id } });
     const exchange = await prisma.exchangeOrder.findUnique({ where: { orderId: order.id } });

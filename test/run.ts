@@ -5,6 +5,7 @@ async function main() {
     { name: "core", run: (await import("./core.test")).run },
     { name: "charging-compat", run: (await import("./charging.test")).run },
     { name: "security", run: (await import("./security.test")).run },
+    { name: "phase2", run: (await import("./phase2.test")).run },
   ];
   let failed = 0;
   for (const s of suites) {

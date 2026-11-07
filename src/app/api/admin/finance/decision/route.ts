@@ -108,7 +108,8 @@ export async function POST(req: Request) {
     } else if (b.kind === "PROVIDER_SECRET") {
       const payload = (approval.payload as any) ?? {};
       if (approve) {
-        await prisma.providerCredential.create({ data: { providerId: payload.providerId, name: payload.name, secretRef: payload.secretRef } });
+        // secretEnc (nếu có) đã được mã hoá AES-GCM ngay từ lúc tạo yêu cầu — plaintext không nằm trong payload.
+        await prisma.providerCredential.create({ data: { providerId: payload.providerId, name: payload.name, secretRef: payload.secretRef, secretEnc: payload.secretEnc ?? null } });
       }
       await prisma.financialApprovalRequest.update({ where: { id: approval.id }, data: { status: approve ? "APPROVED" : "REJECTED", checkerId: s.userId } });
     } else if (b.kind === "ADJUSTMENT") {

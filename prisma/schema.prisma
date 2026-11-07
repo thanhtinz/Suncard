@@ -96,6 +96,46 @@ model UserDevice {
   @@unique([userId, deviceId])
   @@map("user_devices")
 }
+// ---------- Passkey / WebAuthn (Phase 4) ----------
+model WebAuthnCredential {
+  id String @id @default(cuid())
+  userId String
+  credentialId String @unique // base64url credential ID
+  publicKey String // COSE public key dạng base64url
+  counter BigInt @default(0)
+  transports String? // JSON mảng transports
+  deviceName String?
+  backedUp Boolean @default(false)
+  lastUsedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@map("webauthn_credentials")
+}
+model WebAuthnChallenge {
+  id String @id @default(cuid())
+  challenge String @unique
+  purpose String // REGISTER|LOGIN|STEPUP
+  userId String?
+  email String?
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@map("webauthn_challenges")
+}
+
+// ---------- Rate limit phân tán (Phase 4): cửa sổ cố định 1 phút, upsert nguyên tử ----------
+model RateLimitCounter {
+  id String @id @default(cuid())
+  key String
+  windowStart DateTime
+  count Int @default(0)
+  updatedAt DateTime @updatedAt
+  @@unique([key, windowStart])
+  @@index([windowStart])
+  @@map("rate_limit_counters")
+}
+
 model VerificationRecord {
   id String @id @default(cuid())
   userId String
@@ -428,6 +468,7 @@ model ProviderCredential {
   providerId String
   name String
   secretRef String // chỉ giữ REFERENCE (env:vault:...), không plaintext
+  secretEnc String? // secret mã hoá AES-256-GCM (v1.*) cho provider HTTP — chỉ ghi qua duyệt kép PROVIDER_SECRET
   isActive Boolean @default(true)
   createdAt DateTime @default(now())
   @@index([providerId])

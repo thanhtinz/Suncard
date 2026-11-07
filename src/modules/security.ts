@@ -212,7 +212,8 @@ export async function verifyPartnerRequest(req: Request, rawBody: string): Promi
     throw new ApiError("SIGNATURE_INVALID", 401, "Chữ ký không hợp lệ");
   }
   const limit = await getNumberSetting("api.rate_limit_per_minute", 120);
-  if (!rateLimit(`partner:${client.id}`, limit)) throw new ApiError("RATE_LIMITED", 429, "Vượt giới hạn request");
+  const { rateLimitDistributed } = await import("./rate-limit");
+  if (!(await rateLimitDistributed(`partner:${client.id}`, limit))) throw new ApiError("RATE_LIMITED", 429, "Vượt giới hạn request");
 
   await prisma.apiKey.update({ where: { id: apiKey.id }, data: { lastUsedAt: new Date() } });
   return { client, apiKey, userId: client.userId ?? null };

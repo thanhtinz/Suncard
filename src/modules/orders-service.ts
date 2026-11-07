@@ -240,6 +240,23 @@ export async function inquireOrder(orderId: string, actor = "system") {
   const provider = await prisma.provider.findUnique({ where: { id: order.providerId } });
   if (!provider) return { order, changed: false };
   const adapter = getAdapter(provider.code);
+  // Đơn gạch thẻ: inquiry chốt bằng settleExchange/rejectExchange (cộng ví đúng luồng exchange),
+  // TUYỆT ĐỐI không đi đường settle hold của topup.
+  if (order.type === "EXCHANGE") {
+    const ex = await prisma.exchangeOrder.findUnique({ where: { orderId } });
+    const result = await adapter.getOrderStatus(prisma as unknown as DB, order.providerRef ?? "");
+    await prisma.providerTransaction.create({
+      data: { providerId: provider.id, orderId, externalRef: order.providerRef, action: "INQUIRY", status: result.status, responseMasked: { rawStatus: result.rawStatus } },
+    });
+    if (result.status === "SUCCESS") {
+      await settleExchange(orderId, result.acceptedValueMinor ?? (ex?.declaredValueMinor as bigint), actor);
+    } else if (result.status === "FAILED") {
+      if (order.status === "UNKNOWN") await transitionOrder(prisma as unknown as DB, orderId, "PROCESSING", actor, "inquiry xác nhận").catch(() => undefined);
+      await rejectExchange(orderId, "Inquiry: upstream xác nhận thẻ lỗi", actor);
+    }
+    const freshEx = await prisma.order.findUnique({ where: { id: orderId } });
+    return { order: freshEx, changed: true, providerStatus: result.status, actor };
+  }
   const topup = await prisma.topupOrder.findUnique({ where: { orderId } });
   const result = await adapter.getOrderStatus(prisma as unknown as DB, order.providerRef ?? topup?.providerTxnId ?? "");
   await prisma.providerTransaction.create({
@@ -380,22 +397,66 @@ export async function submitExchange(input: {
     return o;
   });
 
-  if (providerCode === "MOCK" && !input.deferProcessing) {
-    // Mock verify: PIN kết thúc "000" -> thẻ lỗi; "111" -> sai mệnh giá (mệnh giá thật = mệnh giá ma trận thấp hơn gần nhất); còn lại đúng mệnh giá.
-    if (input.pin.endsWith("000")) {
-      await failOrder(order.id, "Thẻ sai hoặc đã sử dụng (mock)");
-    } else if (input.pin.endsWith("111")) {
-      const { denominationsOf } = await import("./charging");
-      const denoms = await denominationsOf(prisma as unknown as DB, input.carrier);
-      const lower = denoms.filter((d) => d < input.faceValueMinor);
-      if (lower.length === 0) await failOrder(order.id, "Thẻ sai mệnh giá không xác định được (mock)");
-      else await settleExchange(order.id, lower[lower.length - 1]);
-    } else {
-      await settleExchange(order.id, input.faceValueMinor);
-    }
+  if (!input.deferProcessing && providerCode !== "MANUAL") {
+    await finalizeExchangeViaProvider(order.id, { carrier: input.carrier, serial: input.serial, pin: input.pin, faceValueMinor: input.faceValueMinor });
   }
   const finalOrder = await prisma.order.findUnique({ where: { id: order.id } });
   return { order: finalOrder, duplicated: false };
+}
+
+/**
+ * Đẩy đơn gạch thẻ qua provider đã route và chốt theo kết quả (dùng chung cho web/API và Charging Compat):
+ * - MOCK: kịch bản sandbox theo hậu tố PIN ("000" thẻ lỗi, "111" sai mệnh giá, còn lại đúng mệnh giá).
+ * - HTTP_CHARGING: gọi upstream /chargingws/v2 thật; SUCCESS -> settle theo mệnh giá upstream chấp nhận,
+ *   FAILED -> reject, UNKNOWN -> giữ UNKNOWN chờ inquiry (không failover), PENDING -> giữ PENDING.
+ * - MANUAL: không làm gì — Admin duyệt ở hàng chờ.
+ */
+export async function finalizeExchangeViaProvider(
+  orderId: string,
+  card: { carrier: string; serial: string; pin: string; faceValueMinor: bigint },
+  actor = "system"
+) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || order.type !== "EXCHANGE") return order;
+  const provider = order.providerId ? await prisma.provider.findUnique({ where: { id: order.providerId } }) : null;
+  const code = provider?.code ?? String(await getSetting("exchange.provider_code", "MOCK"));
+  if (code === "MOCK") {
+    if (card.pin.endsWith("000")) {
+      await rejectExchange(orderId, "Thẻ lỗi hoặc đã sử dụng (mock)", actor);
+    } else if (card.pin.endsWith("111")) {
+      const { denominationsOf } = await import("./charging");
+      const denoms = await denominationsOf(prisma as unknown as DB, card.carrier);
+      const lower = denoms.filter((d) => d < card.faceValueMinor);
+      if (lower.length === 0) await rejectExchange(orderId, "Sai mệnh giá không xác định (mock)", actor);
+      else await settleExchange(orderId, lower[lower.length - 1], actor);
+    } else {
+      await settleExchange(orderId, card.faceValueMinor, actor);
+    }
+    return prisma.order.findUnique({ where: { id: orderId } });
+  }
+  if (code === "HTTP_CHARGING" && provider) {
+    const adapter = getAdapter(code);
+    const started = Date.now();
+    const result = await adapter.createOrder(prisma as unknown as DB, { orderId, amountMinor: card.faceValueMinor, card });
+    await prisma.providerTransaction.create({
+      data: {
+        providerId: provider.id, orderId, externalRef: result.externalRef, action: "CREATE",
+        status: result.status, responseMasked: { rawStatus: result.rawStatus, message: result.message }, latencyMs: result.latencyMs ?? (Date.now() - started),
+      },
+    });
+    if (result.externalRef) await prisma.order.update({ where: { id: orderId }, data: { providerRef: result.externalRef } });
+    await recordProviderResult(prisma as unknown as DB, provider.id, { status: result.status, latencyMs: result.latencyMs });
+    if (result.status === "SUCCESS") {
+      await settleExchange(orderId, result.acceptedValueMinor ?? card.faceValueMinor, actor);
+    } else if (result.status === "FAILED") {
+      await rejectExchange(orderId, result.message ?? `Upstream từ chối thẻ (status ${result.rawStatus ?? ""})`, actor);
+    } else if (result.status === "UNKNOWN") {
+      await transitionOrder(prisma as unknown as DB, orderId, "UNKNOWN", actor, result.message).catch(() => undefined);
+    }
+    // PENDING: giữ nguyên, chờ callback/inquiry.
+    return prisma.order.findUnique({ where: { id: orderId } });
+  }
+  return order; // MANUAL: chờ Admin
 }
 
 /** Chốt gạch thẻ thành công: cộng ví theo payout đã snapshot. Dùng cho cả Mock lẫn duyệt thủ công ở Admin. */

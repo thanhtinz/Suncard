@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageTitle, Empty, Money } from "@/components/ui";
+import { getFxRates, formatUsdEstimate } from "@/modules/fx";
 
 export const dynamic = "force-dynamic";
 
-export default async function CardShopPage() {
+export default async function CardShopPage({ searchParams }: { searchParams?: { usd?: string } }) {
+  const fx = await getFxRates();
+  const showUsd = fx.displayEnabled && searchParams?.usd === "1";
   const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
   const products = await prisma.product.findMany({ where: { type: "CARD_PIN", isActive: true } });
   const variants = await prisma.productVariant.findMany({ where: { productId: { in: products.map((p) => p.id) }, isActive: true }, orderBy: { sortOrder: "asc" } });
@@ -15,6 +18,13 @@ export default async function CardShopPage() {
   return (
     <div>
       <PageTitle title="Cửa hàng thẻ" sub="Mua mã thẻ cào và gift card, giao mã ngay sau thanh toán" />
+      {fx.displayEnabled && (
+        <div className="mb-5 text-sm">
+          {showUsd
+            ? <span>Đang hiển thị thêm giá quy đổi USD (tỉ giá {fx.vndPerUsd.toLocaleString("vi-VN")} ₫/$ — chỉ để tham khảo, thanh toán vẫn bằng VND). <Link className="text-primary font-medium" href="/cua-hang-the">Tắt quy đổi</Link></span>
+            : <Link className="text-primary font-medium" href="/cua-hang-the?usd=1">Xem thêm giá quy đổi sang USD</Link>}
+        </div>
+      )}
       {products.length === 0 ? <Empty text="Chưa có sản phẩm thẻ nào" /> : categories.map((c) => {
         const ps = products.filter((p) => p.categoryId === c.id);
         if (ps.length === 0) return null;
@@ -28,7 +38,7 @@ export default async function CardShopPage() {
                   <div className="text-sm text-slate-500 mt-1">{(byProduct.get(p.id) ?? []).length} mệnh giá</div>
                   <div className="text-sm mt-2 space-y-0.5">
                     {(byProduct.get(p.id) ?? []).slice(0, 3).map((v) => (
-                      <div key={v.id} className="flex justify-between"><span>{v.name}</span><span className="flex gap-2"><Money v={v.basePriceMinor} /><span className="text-slate-400">còn {stockMap.get(v.id) ?? 0}</span></span></div>
+                      <div key={v.id} className="flex justify-between"><span>{v.name}</span><span className="flex gap-2"><Money v={v.basePriceMinor} />{showUsd && <span className="text-slate-400">{formatUsdEstimate(v.basePriceMinor, fx.vndPerUsd)}</span>}<span className="text-slate-400">còn {stockMap.get(v.id) ?? 0}</span></span></div>
                     ))}
                   </div>
                 </Link>
