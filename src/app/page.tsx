@@ -66,8 +66,8 @@ export default async function HomePage() {
           </div>
           <div className="order-3 lg:col-start-1 lg:row-start-2">
             <Link href="/tra-cuu" className="flex items-center justify-between gap-3 bg-white/80 hover:bg-white transition rounded-2xl px-5 py-4 shadow-soft border border-white max-w-[520px] lg:max-w-none">
-              <span className="text-sm"><b className="text-navy">Đã có mã đơn?</b> <span className="text-muted2">Tra cứu trạng thái & xem lịch sử đổi thẻ</span></span>
-              <span className="font-bold text-sundeep text-sm shrink-0">Tra cứu →</span>
+              <span className="text-sm"><b className="text-navy">Muốn xem lại đơn cũ?</b> <span className="text-muted2">Mở lịch sử đổi thẻ — tìm kiếm & lọc theo trạng thái, nhà mạng, mệnh giá</span></span>
+              <span className="font-bold text-sundeep text-sm shrink-0">Xem lịch sử →</span>
             </Link>
           </div>
         </div>

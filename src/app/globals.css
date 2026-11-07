@@ -10,7 +10,7 @@ body { background: #FFF9F1; color: #14213D; font-family: system-ui, -apple-syste
 .input { @apply w-full rounded-xl border-2 px-3 py-2 text-sm outline-none focus:border-sun2 bg-white; border-color: #EFE3D2; }
 .label { @apply block text-sm font-semibold mb-1 text-navy; }
 .table { @apply w-full text-sm; }
-.table th { @apply text-left font-semibold text-slate-500 px-3 py-2 border-b; }
+.table th { @apply text-left font-semibold text-slate-500 px-3 py-2 border-b whitespace-nowrap; }
 .table td { @apply px-3 py-2 border-b border-orange-100; }
 .badge { @apply inline-block rounded-full px-2 py-0.5 text-xs font-medium; }
 .text-grad-sun { background: linear-gradient(90deg, #E86A17, #F5A623); -webkit-background-clip: text; background-clip: text; color: transparent; }

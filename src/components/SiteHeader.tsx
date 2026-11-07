@@ -45,7 +45,7 @@ export function SunMark({ size = 34 }: { size?: number }) {
 
 const NAV = [
   { href: "/", label: "Đổi thẻ", icon: "swap" },
-  { href: "/tra-cuu", label: "Tra cứu", icon: "search" },
+  { href: "/tra-cuu", label: "Lịch sử", icon: "clock" },
   { href: "/nap-game", label: "Nạp game", icon: "gamepad" },
   { href: "/cua-hang-the", label: "Mua thẻ", icon: "card" },
   { href: "/dai-ly", label: "Đại lý", icon: "store" },
@@ -57,7 +57,7 @@ const TILES = [
   { href: "/", label: "Đổi thẻ", icon: "swap" },
   { href: "/nap-game", label: "Nạp game", icon: "gamepad" },
   { href: "/cua-hang-the", label: "Mua thẻ", icon: "card" },
-  { href: "/tra-cuu", label: "Tra cứu", icon: "search" },
+  { href: "/tra-cuu", label: "Lịch sử", icon: "clock" },
 ];
 
 const ROWS = [
@@ -140,7 +140,10 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </span>
             </Link>
             <form action="/api/auth/logout" method="post" className="hidden md:block">
-              <button className="btn-ghost !py-1.5 !px-3 text-[13px] whitespace-nowrap" aria-label="Đăng xuất">Đăng xuất</button>
+              <button className="btn-ghost !py-1.5 !px-3 text-[13px] whitespace-nowrap" aria-label="Đăng xuất" title="Đăng xuất">
+                <svg className="min-[1560px]:hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3M16 17l5-5-5-5M21 12H9" /></svg>
+                <span className="hidden min-[1560px]:inline">Đăng xuất</span>
+              </button>
             </form>
           </>) : (<>
             <Link href="/dang-nhap" className="flex items-center gap-1.5 bg-white border-[1.5px] border-[#EFDCB8] rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-[13px] sm:text-sm font-bold text-navy whitespace-nowrap hover:border-[#FFB03A]">
