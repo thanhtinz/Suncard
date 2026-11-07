@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { getSession } from "@/modules/security";
 import { prisma } from "@/lib/prisma";
 import SiteHeader, { SunMark, type HeaderUser } from "@/components/SiteHeader";
@@ -10,6 +11,16 @@ const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT"];
 const ROLE_LINE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", OPS: "Vận hành", FINANCE: "Tài chính", SUPPORT: "Hỗ trợ", PRODUCT_MANAGER: "Sản phẩm", PROVIDER_MANAGER: "Nhà cung cấp", RISK: "Rủi ro", AUDITOR: "Kiểm toán" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Khu quản trị /admin dùng khung admin theme riêng (header/menu/footer riêng trong
+  // admin/layout.tsx) — không bọc header/footer của web bán hàng.
+  const pathname = headers().get("x-pathname") ?? "";
+  if (pathname.startsWith("/admin")) {
+    return (
+      <html lang="vi">
+        <body className="bg-[#F7F2E7]">{children}</body>
+      </html>
+    );
+  }
   const session = await getSession().catch(() => null);
   const isStaff = !!session?.roles.some((r) => STAFF_ROLES.includes(r));
   let headerUser: HeaderUser | null = null;

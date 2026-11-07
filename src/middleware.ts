@@ -49,7 +49,11 @@ export function middleware(req: NextRequest) {
       }
     }
   }
-  return NextResponse.next();
+  // Trang thường: đóng dấu pathname để root layout chọn đúng khung giao diện
+  // (khu /admin dùng admin theme riêng, không dùng header/footer của web bán hàng).
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
-export const config = { matcher: ["/api/:path*", "/chargingws/:path*"] };
+export const config = { matcher: ["/api/:path*", "/chargingws/:path*", "/((?!_next/static|_next/image|favicon.ico|images/).*)"] };

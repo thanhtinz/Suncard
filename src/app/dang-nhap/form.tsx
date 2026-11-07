@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
-export default function LoginForm() {
+export default function LoginForm({ next }: { next?: string }) {
+  const dest = next ?? "/tai-khoan";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -18,7 +19,7 @@ export default function LoginForm() {
       const v = await fetch("/api/auth/passkey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "verify", email, response: assertion }) });
       const vd = await v.json().catch(() => ({}));
       if (!v.ok) throw new Error(vd?.error?.message ?? "Đăng nhập bằng passkey thất bại");
-      window.location.href = "/tai-khoan";
+      window.location.href = dest;
     } catch (e) { setMsg(e instanceof Error ? e.message : "Đã huỷ đăng nhập bằng passkey"); setPkBusy(false); }
   }
   async function submit(e: React.FormEvent) {
@@ -27,7 +28,7 @@ export default function LoginForm() {
       const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d?.error?.message ?? d?.message ?? "Đăng nhập thất bại");
-      window.location.href = "/tai-khoan";
+      window.location.href = dest;
     } catch (e) { setMsg(e instanceof Error ? e.message : "Đăng nhập thất bại"); setBusy(false); }
   }
   return (
