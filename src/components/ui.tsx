@@ -27,8 +27,11 @@ export function PageTitle({ title, sub, action }: { title: string; sub?: string;
 }
 export function DataTable({ cols, rows }: { cols: string[]; rows: React.ReactNode[][] }) {
   if (rows.length === 0) return <Empty />;
+  // Bảng nhiều cột (>=5): giữ chiều rộng tối thiểu để cuộn ngang trong thẻ trên mobile,
+  // thay vì bị bóp hẹp làm chữ xuống hàng/cắt mất nội dung.
+  const minW = cols.length >= 7 ? "min-w-[860px]" : cols.length >= 5 ? "min-w-[680px]" : "";
   return (
-    <div className="card overflow-x-auto"><table className="table"><thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+    <div className="card overflow-x-auto"><table className={`table ${minW}`}><thead><tr>{cols.map((c) => <th key={c}>{c}</th>)}</tr></thead>
     <tbody>{rows.map((r, i) => <tr key={i}>{r.map((cell, j) => <td key={j}>{cell}</td>)}</tr>)}</tbody></table></div>
   );
 }
