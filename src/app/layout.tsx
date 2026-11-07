@@ -14,10 +14,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isStaff = !!session?.roles.some((r) => STAFF_ROLES.includes(r));
   let headerUser: HeaderUser | null = null;
   if (session) {
-    const [profile, avail, unread] = await Promise.all([
+    const [profile, avail, unread, notifRows] = await Promise.all([
       prisma.userProfile.findUnique({ where: { userId: session.userId } }).catch(() => null),
       prisma.ledgerAccount.findUnique({ where: { code: `WALLET:${session.userId}:AVAILABLE` } }).catch(() => null),
       prisma.notification.count({ where: { userId: session.userId, readAt: null } }).catch(() => 0),
+      prisma.notification.findMany({ where: { userId: session.userId }, orderBy: { createdAt: "desc" }, take: 6 }).catch(() => []),
     ]);
     const displayName = profile?.fullName ?? session.email.split("@")[0];
     headerUser = {
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       isStaff,
       balance: `${Number(avail?.balanceMinor ?? BigInt(0)).toLocaleString("vi-VN")}₫`,
       unread,
+      notifications: notifRows.map((n) => ({ id: n.id, title: n.title, body: n.body ?? "", time: n.createdAt.toISOString(), read: !!n.readAt })),
     };
   }
   return (

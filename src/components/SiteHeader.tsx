@@ -1,8 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavIcon, isActive } from "./nav";
+
+export interface HeaderNotif {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+}
 
 export interface HeaderUser {
   email: string;
@@ -12,6 +20,19 @@ export interface HeaderUser {
   isStaff: boolean;
   balance: string;
   unread: number;
+  notifications: HeaderNotif[];
+}
+
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "Vừa xong";
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} ngày trước`;
+  return new Date(iso).toLocaleDateString("vi-VN");
 }
 
 export function SunMark({ size = 34 }: { size?: number }) {
@@ -48,8 +69,25 @@ const ROWS = [
 export default function SiteHeader({ user }: { user: HeaderUser | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  useEffect(() => { setOpen(false); }, [pathname]);
-  useEffect(() => { if (window.location.hash === "#menu") setOpen(true); }, []);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [unread, setUnread] = useState(user?.unread ?? 0);
+  const markedRef = useRef(false);
+  useEffect(() => { setOpen(false); setBellOpen(false); }, [pathname]);
+  useEffect(() => { setUnread(user?.unread ?? 0); }, [user?.unread]);
+  useEffect(() => { if (window.location.hash === "#menu") setOpen(true); if (window.location.hash === "#bell") setBellOpen(true); }, []);
+
+  function toggleBell() {
+    const next = !bellOpen;
+    setBellOpen(next);
+    if (next) {
+      setOpen(false);
+      if (user && unread > 0 && !markedRef.current) {
+        markedRef.current = true;
+        fetch("/api/notifications/read", { method: "POST" }).catch(() => undefined);
+        setUnread(0);
+      }
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#F1DFC0] shadow-[0_6px_22px_rgba(232,106,23,0.08)]" style={{ background: "linear-gradient(180deg, rgba(255,252,246,.97), rgba(255,244,224,.97))", backdropFilter: "blur(8px)" }}>
@@ -87,10 +125,10 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </Link>
             </span>
             )}
-            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
+            <button type="button" onClick={toggleBell} aria-label="Thông báo" aria-expanded={bellOpen} className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
               <NavIcon k="bell" size={19} />
-              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
-            </Link>
+              {unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
+            </button>
             {user.isStaff && (
               <Link href="/admin" className="hidden md:block text-sm font-semibold text-navy hover:text-sundeep">Admin</Link>
             )}
@@ -114,7 +152,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               <svg className="hidden sm:block" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </>)}
-          <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}
+          <button type="button" onClick={() => { setBellOpen(false); setOpen((v) => !v); }} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}
             className={`min-[1400px]:hidden w-[39px] h-[39px] rounded-xl border-[1.5px] flex items-center justify-center shrink-0 ${open ? "bg-navy border-navy text-white" : "bg-white border-[#F1E0C2] text-navy"}`}>
             {open
               ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -175,6 +213,40 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </div>
             </div>
           </div>
+        )}
+
+        {bellOpen && user && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setBellOpen(false)} />
+            <div className="absolute right-3 sm:right-4 top-full z-20 mt-1 w-[min(92vw,380px)]">
+              <div className="bg-white rounded-[22px] border border-[#F1E0C2] shadow-[0_24px_34px_rgba(90,60,5,0.16)] overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5">
+                  <span className="text-[15px] font-extrabold text-navy">Thông báo</span>
+                  {user.unread > 0 && <span className="text-[11px] font-extrabold text-white bg-[#F04B3A] rounded-full px-2 py-0.5">{user.unread} mới</span>}
+                </div>
+                {user.notifications.length === 0 ? (
+                  <div className="px-4 pb-5 pt-2 text-center">
+                    <span className="mx-auto mb-2 w-11 h-11 rounded-full bg-[#FFF3DF] text-sundeep flex items-center justify-center"><NavIcon k="bell" size={20} /></span>
+                    <span className="block text-sm font-semibold text-slate-500">Chưa có thông báo nào</span>
+                  </div>
+                ) : (
+                  <div className="max-h-[360px] overflow-y-auto divide-y divide-[#F7EDD8] border-t border-[#F7EDD8]">
+                    {user.notifications.map((n) => (
+                      <div key={n.id} className={`flex gap-2.5 px-4 py-3 ${n.read ? "" : "bg-[#FFF9F1]"}`}>
+                        <span className={`mt-[7px] w-2 h-2 rounded-full shrink-0 ${n.read ? "bg-slate-200" : "bg-grad-sun"}`} />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-navy leading-snug">{n.title}</span>
+                          {n.body && <span className="block text-[13px] text-slate-500 leading-snug mt-0.5 line-clamp-2">{n.body}</span>}
+                          <span className="block text-[11px] font-medium text-[#B39B6B] mt-1">{relTime(n.time)}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Link href="/tai-khoan/thong-bao" onClick={() => setBellOpen(false)} className="block text-center py-3 text-sm font-extrabold text-sundeep bg-[#FFFBF2] border-t border-[#F1E0C2] hover:bg-[#FFF3E0]">Xem tất cả</Link>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </header>
