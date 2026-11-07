@@ -87,6 +87,10 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </Link>
             </span>
             )}
+            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
+              <NavIcon k="bell" size={19} />
+              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
+            </Link>
             {user.isStaff && (
               <Link href="/admin" className="hidden md:block text-sm font-semibold text-navy hover:text-sundeep">Admin</Link>
             )}
@@ -116,12 +120,6 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
               : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h10" /></svg>}
           </button>
-          {user && (
-            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
-              <NavIcon k="bell" size={19} />
-              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
-            </Link>
-          )}
         </div>
 
         {open && (
