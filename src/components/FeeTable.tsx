@@ -47,12 +47,12 @@ export default function FeeTable({ rows }: { rows: FeeRow[] }) {
         ))}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[620px]">
           <thead>
             <tr className="text-left text-muted2 border-b border-sunline">
-              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Mệnh giá</th>
-              {GROUPS.map((g) => <th key={g.key} className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">{g.name}</th>)}
-              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Thực nhận (Thành viên)</th>
+              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide whitespace-nowrap">Mệnh giá</th>
+              {GROUPS.map((g) => <th key={g.key} className="px-5 py-3 font-semibold text-xs uppercase tracking-wide whitespace-nowrap">{g.name}</th>)}
+              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide whitespace-nowrap">Thực nhận (Thành viên)</th>
             </tr>
           </thead>
           <tbody>
@@ -60,11 +60,11 @@ export default function FeeTable({ rows }: { rows: FeeRow[] }) {
               const member = byGroup.MEMBER;
               return (
                 <tr key={face} className="border-b border-orange-100 last:border-0">
-                  <td className="px-5 py-3 font-bold text-navy">{vnd(face)}</td>
+                  <td className="px-5 py-3 font-bold text-navy whitespace-nowrap">{vnd(face)}</td>
                   {GROUPS.map((g) => (
                     <td key={g.key} className="px-5 py-3">{byGroup[g.key] ? pct(byGroup[g.key]!.feeBps) : "—"}</td>
                   ))}
-                  <td className="px-5 py-3 text-sundeep font-bold">
+                  <td className="px-5 py-3 text-sundeep font-bold whitespace-nowrap">
                     {member ? vnd(Math.floor(face * (1 - member.feeBps / 10000))) : "—"}
                   </td>
                 </tr>
