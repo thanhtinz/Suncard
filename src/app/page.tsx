@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge, Money } from "@/components/ui";
 import { getSession } from "@/modules/security";
@@ -11,24 +10,6 @@ const TRUST = [
   { label: "Xử lý ~30 giây", icon: <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" /> },
   { label: "Mã thẻ mã hoá an toàn", icon: <><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" /></> },
   { label: "9 nhà mạng & thẻ game", icon: <path d="M4 7h16M4 12h16M4 17h10" /> },
-];
-
-const SERVICES = [
-  {
-    href: "/nap-game", title: "Nạp game", bg: "#FFF1E0",
-    desc: "Nạp trực tiếp bằng UID cho Liên Quân, Free Fire, Genshin… Hiện đúng số nhận được trước khi thanh toán.",
-    icon: <><path d="M6 9h12l1.5 9a2 2 0 0 1-2 2.3h-11A2 2 0 0 1 4.5 18L6 9z" /><path d="M9 9V7a3 3 0 0 1 6 0v2M9.5 14.5h.01M14.5 14.5h.01" /></>,
-  },
-  {
-    href: "/cua-hang-the", title: "Mua thẻ", bg: "#FFE9EC",
-    desc: "Mua thẻ điện thoại, thẻ game, gift card bằng số dư ví. Nhận mã ngay trên web, bảo hành mã lỗi.",
-    icon: <><rect x="3" y="6" width="18" height="13" rx="3" /><path d="M3 10.5h18M7 15.5h4" /></>,
-  },
-  {
-    href: "/dai-ly", title: "Đại lý", bg: "#FFF7E0",
-    desc: "Phí tốt hơn theo sản lượng, hoa hồng nhiều tầng, API gạch thẻ sẵn sàng cho shop và web con của bạn.",
-    icon: <><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M16.5 5.5a3.2 3.2 0 0 1 0 5.8M18.6 15.4c1.2.8 2 2.3 2.3 4.6" /></>,
-  },
 ];
 
 export default async function HomePage({ searchParams }: { searchParams?: { code?: string } }) {
@@ -121,22 +102,6 @@ export default async function HomePage({ searchParams }: { searchParams?: { code
           <span className="text-sm text-muted2 hidden sm:block">Phí theo nhóm tài khoản — xem đủ 3 nhóm trong bảng</span>
         </div>
         <FeeTable rows={feeRows} />
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-bold text-navy mb-4">Một ví — ba dịch vụ</h2>
-        <div className="grid md:grid-cols-3 gap-5">
-          {SERVICES.map((s) => (
-            <div key={s.href} className="card !rounded-[22px] p-6">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3.5" style={{ background: s.bg }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{s.icon}</svg>
-              </div>
-              <h3 className="text-lg font-bold text-navy">{s.title}</h3>
-              <p className="text-sm text-muted2 leading-relaxed mt-1.5">{s.desc}</p>
-              <Link href={s.href} className="inline-block mt-3 font-bold text-sm text-sundeep">{s.title} →</Link>
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );
