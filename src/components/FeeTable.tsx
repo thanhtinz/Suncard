@@ -1,0 +1,82 @@
+"use client";
+import { useMemo, useState } from "react";
+
+export type FeeRow = { telco: string; face: number; group: string; feeBps: number; penaltyBps: number };
+
+const TELCO_NAMES: Record<string, string> = {
+  VIETTEL: "Viettel", VINAPHONE: "Vinaphone", MOBIFONE: "Mobifone", VNMOBI: "Vietnamobile",
+  ZING: "Zing", GARENA: "Garena", VCOIN: "Vcoin", GATE: "Gate", SCOIN: "Scoin",
+};
+const GROUPS: { key: string; name: string }[] = [
+  { key: "MEMBER", name: "Thành viên" }, { key: "AGENT", name: "Đại lý" }, { key: "API", name: "Đối tác API" },
+];
+
+function pct(bps: number) {
+  return `${(bps / 100).toFixed(2).replace(/\.?0+$/, "")}%`;
+}
+function vnd(n: number) {
+  return `${n.toLocaleString("vi-VN")} ₫`;
+}
+
+export default function FeeTable({ rows }: { rows: FeeRow[] }) {
+  const telcos = useMemo(() => {
+    const seen: string[] = [];
+    for (const r of rows) if (!seen.includes(r.telco)) seen.push(r.telco);
+    return seen;
+  }, [rows]);
+  const [telco, setTelco] = useState(telcos[0] ?? "VIETTEL");
+  const faces = useMemo(() => {
+    const set = new Map<number, Partial<Record<string, FeeRow>>>();
+    for (const r of rows.filter((x) => x.telco === telco)) {
+      if (!set.has(r.face)) set.set(r.face, {});
+      set.get(r.face)![r.group] = r;
+    }
+    return [...set.entries()].sort((a, b) => a[0] - b[0]);
+  }, [rows, telco]);
+  const penalty = rows.find((r) => r.telco === telco)?.penaltyBps ?? 5000;
+
+  if (rows.length === 0) return <div className="card p-5 text-sm text-slate-500">Bảng phí đang được cập nhật.</div>;
+  return (
+    <div className="card overflow-hidden">
+      <div className="flex flex-wrap gap-1 p-2 bg-slate-50 border-b" role="tablist" aria-label="Loại thẻ">
+        {telcos.map((t) => (
+          <button key={t} role="tab" aria-selected={t === telco} onClick={() => setTelco(t)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${t === telco ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            {TELCO_NAMES[t] ?? t}
+          </button>
+        ))}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-slate-500 border-b">
+              <th className="px-4 py-2.5 font-medium">Mệnh giá</th>
+              {GROUPS.map((g) => <th key={g.key} className="px-4 py-2.5 font-medium">{g.name}</th>)}
+              <th className="px-4 py-2.5 font-medium">Thực nhận (Thành viên)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {faces.map(([face, byGroup]) => {
+              const member = byGroup.MEMBER;
+              return (
+                <tr key={face} className="border-b last:border-0">
+                  <td className="px-4 py-2.5 font-medium">{vnd(face)}</td>
+                  {GROUPS.map((g) => (
+                    <td key={g.key} className="px-4 py-2.5">{byGroup[g.key] ? pct(byGroup[g.key]!.feeBps) : "—"}</td>
+                  ))}
+                  <td className="px-4 py-2.5 text-primary font-medium">
+                    {member ? vnd(Math.floor(face * (1 - member.feeBps / 10000))) : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="px-4 py-3 text-xs text-slate-500 bg-slate-50">
+        Khai sai mệnh giá: tính theo mệnh giá thực tế và trừ thêm phí phạt {pct(penalty)} của mệnh giá nhỏ hơn.
+        Phí áp dụng theo nhóm tài khoản của bạn tại thời điểm gạch thẻ.
+      </p>
+    </div>
+  );
+}

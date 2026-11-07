@@ -1,12 +1,23 @@
 "use client";
 import { useState } from "react";
-const CARRIERS = ["Viettel", "Mobifone", "Vinaphone", "Garena", "Zing"];
-const FACES = [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000];
+const CARRIER_FACES: Record<string, number[]> = {
+  Viettel: [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000, 1000000],
+  Mobifone: [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000],
+  Vinaphone: [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000],
+  Vietnamobile: [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000],
+  Garena: [5000, 10000, 20000, 50000, 100000, 200000, 500000],
+  Zing: [10000, 20000, 50000, 100000, 200000, 500000, 1000000],
+  Vcoin: [10000, 20000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 5000000, 10000000],
+  Gate: [10000, 20000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 5000000, 10000000],
+  Scoin: [10000, 20000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 5000000],
+};
+const CARRIERS = Object.keys(CARRIER_FACES);
 export default function ExchangeForm({ loggedIn }: { loggedIn: boolean }) {
   const [carrier, setCarrier] = useState("Viettel");
   const [serial, setSerial] = useState("");
   const [pin, setPin] = useState("");
   const [face, setFace] = useState(100000);
+  const faces = CARRIER_FACES[carrier] ?? CARRIER_FACES.Viettel;
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
@@ -24,11 +35,11 @@ export default function ExchangeForm({ loggedIn }: { loggedIn: boolean }) {
   return (
     <form onSubmit={submit} className="card p-5 space-y-4">
       <div><label className="label">Nhà mạng / loại thẻ</label>
-        <select className="input" value={carrier} onChange={(e) => setCarrier(e.target.value)}>{CARRIERS.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+        <select className="input" value={carrier} onChange={(e) => { const c = e.target.value; setCarrier(c); if (!CARRIER_FACES[c].includes(face)) setFace(CARRIER_FACES[c].includes(100000) ? 100000 : CARRIER_FACES[c][0]); }}>{CARRIERS.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
       <div><label className="label">Số serial</label><input className="input" value={serial} onChange={(e) => setSerial(e.target.value)} required /></div>
       <div><label className="label">Mã thẻ (PIN)</label><input className="input" value={pin} onChange={(e) => setPin(e.target.value)} required /></div>
       <div><label className="label">Mệnh giá khai báo</label>
-        <select className="input" value={face} onChange={(e) => setFace(Number(e.target.value))}>{FACES.map((f) => <option key={f} value={f}>{f.toLocaleString("vi-VN")} ₫</option>)}</select></div>
+        <select className="input" value={face} onChange={(e) => setFace(Number(e.target.value))}>{faces.map((f) => <option key={f} value={f}>{f.toLocaleString("vi-VN")} ₫</option>)}</select></div>
       {!loggedIn && <div className="rounded-lg bg-amber-50 text-amber-700 px-3 py-2 text-sm">Bạn chưa đăng nhập. <a className="underline font-medium" href="/dang-nhap">Đăng nhập</a> để gạch thẻ.</div>}
       {msg && <div className="rounded-lg bg-blue-50 text-blue-700 px-3 py-2 text-sm">{msg}</div>}
       <button className="btn-primary w-full" disabled={busy}>Gạch thẻ</button>

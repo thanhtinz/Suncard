@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { PageTitle, DataTable, StatusBadge, Money } from "@/components/ui";
 import { getSession } from "@/modules/security";
 import { getNumberSetting } from "@/modules/settings";
-import ExchangeForm from "./form";
+import ExchangeForm from "@/components/ExchangeForm";
 
 export const dynamic = "force-dynamic";
 const CARRIERS: { key: string; name: string }[] = [

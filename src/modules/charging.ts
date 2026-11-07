@@ -79,10 +79,11 @@ export interface ExchangeFee { feeBps: number; penaltyBps: number; groupCode: st
 
 /** Tra phí với fallback nhóm: API -> AGENT -> MEMBER (nhóm cao hơn không có dòng riêng thì dùng nhóm thấp hơn). */
 export async function getExchangeFee(db: DB, telco: string, faceValueMinor: bigint, groupCode: string): Promise<ExchangeFee | null> {
+  const code = normalizeTelco(telco) ?? telco.toUpperCase();
   const chain = groupCode === "API" ? ["API", "AGENT", "MEMBER"] : groupCode === "AGENT" ? ["AGENT", "MEMBER"] : ["MEMBER"];
   for (const g of chain) {
     const row = await db.exchangeFeeRule.findUnique({
-      where: { telco_faceValueMinor_groupCode: { telco: telco.toUpperCase(), faceValueMinor, groupCode: g } },
+      where: { telco_faceValueMinor_groupCode: { telco: code, faceValueMinor, groupCode: g } },
     });
     if (row && row.isActive) return { feeBps: row.feeBps, penaltyBps: row.penaltyBps, groupCode: g };
   }
@@ -91,7 +92,7 @@ export async function getExchangeFee(db: DB, telco: string, faceValueMinor: bigi
 
 export async function denominationsOf(db: DB, telco: string): Promise<bigint[]> {
   const rows = await db.exchangeFeeRule.findMany({
-    where: { telco: telco.toUpperCase(), groupCode: "MEMBER", isActive: true },
+    where: { telco: normalizeTelco(telco) ?? telco.toUpperCase(), groupCode: "MEMBER", isActive: true },
     orderBy: { faceValueMinor: "asc" },
   });
   return rows.map((r: any) => r.faceValueMinor as bigint);
