@@ -5,6 +5,8 @@ export default function LoginForm({ next }: { next?: string }) {
   const dest = next ?? "/tai-khoan";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needTotp, setNeedTotp] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [pkBusy, setPkBusy] = useState(false);
@@ -25,9 +27,18 @@ export default function LoginForm({ next }: { next?: string }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg("");
     try {
-      const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, totpCode: needTotp ? totpCode : undefined }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d?.error?.message ?? d?.message ?? "Đăng nhập thất bại");
+      if (!r.ok) {
+        // Tài khoản đã bật 2 lớp: chuyển sang bước nhập mã TOTP thay vì báo lỗi chết.
+        if (d?.error?.code === "MFA_REQUIRED" && !needTotp) {
+          setNeedTotp(true);
+          setMsg("Tài khoản đã bật xác thực 2 lớp — nhập mã 6 số trong app Authenticator để hoàn tất đăng nhập.");
+          setBusy(false);
+          return;
+        }
+        throw new Error(d?.error?.message ?? d?.message ?? "Đăng nhập thất bại");
+      }
       window.location.href = dest;
     } catch (e) { setMsg(e instanceof Error ? e.message : "Đăng nhập thất bại"); setBusy(false); }
   }
@@ -35,8 +46,14 @@ export default function LoginForm({ next }: { next?: string }) {
     <form onSubmit={submit} className="card p-6 space-y-4">
       <div><label className="label">Email</label><input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
       <div><label className="label">Mật khẩu</label><input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-      {msg && <div className="rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">{msg}</div>}
-      <button className="btn-primary w-full" disabled={busy}>Đăng nhập</button>
+      {needTotp && (
+        <div>
+          <label className="label">Mã xác thực 2 lớp (6 số)</label>
+          <input className="input" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))} placeholder="123456" maxLength={6} inputMode="numeric" autoComplete="one-time-code" autoFocus required />
+        </div>
+      )}
+      {msg && <div className={`rounded-lg px-3 py-2 text-sm ${needTotp ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700"}`}>{msg}</div>}
+      <button className="btn-primary w-full" disabled={busy}>{needTotp ? "Xác nhận & đăng nhập" : "Đăng nhập"}</button>
       <div className="flex items-center gap-3 text-xs text-slate-400"><span className="h-px bg-slate-200 grow" />hoặc<span className="h-px bg-slate-200 grow" /></div>
       <button type="button" className="btn-ghost w-full border border-slate-200" onClick={loginWithPasskey} disabled={pkBusy}>{pkBusy ? "Đang chờ thiết bị..." : "Đăng nhập bằng passkey"}</button>
     </form>

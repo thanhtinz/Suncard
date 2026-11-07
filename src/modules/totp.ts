@@ -40,10 +40,10 @@ export function totpCode(secretB32: string, atMs = Date.now()): string {
   return String(bin % 1_000_000).padStart(6, "0");
 }
 
-/** Verify với cửa sổ ±1 bước (90s) chống lệch giờ. */
+/** Verify với cửa sổ ±2 bước (150s) chống lệch giờ đồng hồ điện thoại. */
 export function verifyTotp(secretB32: string, code: string): boolean {
   if (!/^\d{6}$/.test(code ?? "")) return false;
-  for (const drift of [0, -30000, 30000]) {
+  for (const drift of [0, -30000, 30000, -60000, 60000]) {
     if (totpCode(secretB32, Date.now() + drift) === code) return true;
   }
   return false;
