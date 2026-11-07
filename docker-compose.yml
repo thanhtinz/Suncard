@@ -1,0 +1,77 @@
+# SunCard — docker-compose
+# Dùng: docker compose up -d --build
+# Sau khi app lên: docker compose exec app npx prisma db push
+#                  docker compose exec app npm run db:seed   (tuỳ chọn, dữ liệu demo)
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: suncard:latest
+    container_name: suncard-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Postgres nội bộ compose (service "postgres" ở dưới)
+      DATABASE_URL: "postgresql://suncard:${POSTGRES_PASSWORD:-suncard}@postgres:5432/suncard?schema=public"
+      JWT_SECRET: "${JWT_SECRET:?Thiếu JWT_SECRET — xem .env hoặc scripts/install-vps.sh}"
+      CARD_ENCRYPTION_KEY: "${CARD_ENCRYPTION_KEY:?Thiếu CARD_ENCRYPTION_KEY}"
+      CARD_FINGERPRINT_KEY: "${CARD_FINGERPRINT_KEY:?Thiếu CARD_FINGERPRINT_KEY}"
+      PARTNER_WEBHOOK_SECRET: "${PARTNER_WEBHOOK_SECRET:-change-me-partner-webhook-secret}"
+      PROVIDER_WEBHOOK_SECRET: "${PROVIDER_WEBHOOK_SECRET:-change-me-provider-webhook-secret}"
+      NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-http://localhost:3000}"
+      # Redis hiện CHƯA bắt buộc (xem service redis bên dưới).
+      REDIS_URL: "redis://redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - suncard
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: suncard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: suncard
+      POSTGRES_USER: suncard
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-suncard}"
+    volumes:
+      - suncard_pgdata:/var/lib/postgresql/data
+    ports:
+      # Chỉ map ra host khi cần debug local; production nên bỏ dòng này.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U suncard -d suncard"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - suncard
+
+  # Redis: DỰ PHÒNG cho worker / rate-limit / queue ở giai đoạn sau.
+  # Hiện tại (Phase 1) app KHÔNG bắt buộc Redis để chạy — rate-limit và
+  # webhook delivery đang chạy in-process / qua DB. Giữ service này sẵn
+  # để khi bật worker nền (webhook retry, reconciliation job) chỉ cần
+  # trỏ REDIS_URL, không phải sửa compose.
+  redis:
+    image: redis:7-alpine
+    container_name: suncard-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - suncard_redisdata:/data
+    networks:
+      - suncard
+
+volumes:
+  suncard_pgdata:
+  suncard_redisdata:
+
+networks:
+  suncard:
+    driver: bridge

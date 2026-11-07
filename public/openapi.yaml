@@ -1,0 +1,1205 @@
+openapi: 3.1.0
+info:
+  title: SunCard Partner API
+  version: 1.0.0
+  description: |
+    API dành cho đối tác (Partner API) của SunCard — nền tảng phân phối sản phẩm số:
+    bán mã thẻ/PIN, nạp game trực tiếp, gạch thẻ, ví/ledger, đại lý đa tầng.
+
+    ## Xác thực — API key + HMAC-SHA256
+    Mọi request (trừ webhook inbound) phải kèm các header:
+    - `Authorization: Bearer <api_key>`
+    - `X-Client-Id: <client_id>`
+    - `X-Timestamp: <unix seconds>` (lệch quá 300 giây so với giờ server sẽ bị từ chối)
+    - `X-Nonce: <chuỗi ngẫu nhiên duy nhất mỗi request>` (chống replay)
+    - `X-Signature: <hex HMAC-SHA256>`
+
+    Chữ ký được tính như sau:
+
+        signature = HMAC-SHA256(secret, "METHOD\npath\ntimestamp\nnonce\nsha256(body)")
+
+    trong đó `path` là đường dẫn đầy đủ gồm cả `/v1/...` (không gồm query string),
+    `body` là raw body (request không có body thì dùng chuỗi rỗng), và `sha256(body)`
+    là hex digest của body. Secret chỉ được cấp 1 lần khi tạo API key; phía server
+    chỉ lưu hash + bản mã hoá envelope để verify.
+
+    ## Idempotency
+    Các POST tạo giao dịch (`/orders`, `/wallet/transfers`, `/cards/purchases`,
+    `/card-exchange/submissions`, ...) yêu cầu header `Idempotency-Key`.
+    Gửi lại cùng key + cùng nội dung trả về kết quả cũ; cùng key + khác nội dung
+    trả lỗi `DUPLICATE_REQUEST`.
+
+    ## Tiền tệ
+    Mọi số tiền dùng `amount_minor` — **integer dạng string** theo đơn vị nhỏ nhất
+    của `currency` (VND: minor = đồng, không có phần thập phân). Không dùng float.
+
+    ## Phân trang
+    Danh sách dùng cursor pagination: tham số `cursor` + `limit` (mặc định 20, tối đa 100),
+    phản hồi có `next_cursor` (null khi hết trang).
+
+    ## Lỗi
+    Mọi lỗi trả envelope thống nhất kèm `request_id` để tra cứu:
+
+        { "error": { "code": "INSUFFICIENT_BALANCE", "message": "..." }, "request_id": "req_..." }
+servers:
+  - url: https://api.suncard.vn
+    description: Production (LIVE)
+  - url: https://sandbox.suncard.vn
+    description: Sandbox
+  - url: http://localhost:3000
+    description: Local dev
+tags:
+  - name: Catalog
+  - name: Games
+  - name: Pricing
+  - name: Topups
+  - name: Orders
+  - name: Wallet
+  - name: Cards
+  - name: CardExchange
+  - name: Agents
+  - name: Webhooks
+security:
+  - hmacAuth: []
+paths:
+  /v1/categories:
+    get:
+      tags: [Catalog]
+      operationId: listCategories
+      summary: Danh sách danh mục sản phẩm
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/products:
+    get:
+      tags: [Catalog]
+      operationId: listProducts
+      summary: Danh sách sản phẩm
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: category_id
+          in: query
+          schema: { type: string }
+        - name: type
+          in: query
+          description: 'CARD_PIN | GAME_TOPUP | GIFT_CARD'
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/products/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getProduct
+      summary: Chi tiết sản phẩm (kèm biến thể mệnh giá)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProductDetail'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/games:
+    get:
+      tags: [Games]
+      operationId: listGames
+      summary: Danh sách game hỗ trợ nạp trực tiếp
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Game'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/games/{id}/packages:
+    get:
+      tags: [Games]
+      operationId: listGamePackages
+      summary: Các gói nạp của một game
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: region
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductVariant'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/regions:
+    get:
+      tags: [Games]
+      operationId: listRegions
+      summary: Danh sách region/server được hỗ trợ
+      parameters:
+        - name: game_id
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/prices:
+    get:
+      tags: [Pricing]
+      operationId: listPrices
+      summary: Bảng giá hiệu lực cho đối tác (đã áp pricing precedence + cấp đại lý)
+      parameters:
+        - name: product_id
+          in: query
+          schema: { type: string }
+        - name: variant_id
+          in: query
+          schema: { type: string }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Price'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/topups/validate:
+    post:
+      tags: [Topups]
+      operationId: validateTopup
+      summary: Kiểm tra tài khoản game (UID) trước khi tạo đơn — trả nickname nếu hợp lệ
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [game_id, player_id]
+              properties:
+                game_id: { type: string }
+                player_id: { type: string }
+                region: { type: string }
+                server: { type: string }
+      responses:
+        '200':
+          description: UID hợp lệ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      player_id: { type: string }
+                      player_name: { type: string }
+                      region: { type: string }
+                      validation_token: { type: string, description: 'Token xác thực ngắn hạn, gửi kèm khi tạo đơn; hết hạn trả VALIDATION_EXPIRED' }
+                      expires_at: { type: string, format: date-time }
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/orders:
+    post:
+      tags: [Orders]
+      operationId: createOrder
+      summary: Tạo đơn (nạp game hoặc mua thẻ) — trừ ví qua hold, idempotent
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Đơn đã tạo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+    get:
+      tags: [Orders]
+      operationId: listOrders
+      summary: Danh sách đơn của đối tác
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Order'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/orders/{id}:
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      summary: Chi tiết đơn hàng
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      operationId: cancelOrder
+      summary: Huỷ đơn (chỉ khi đơn chưa submit tới provider / còn ở trạng thái cho phép)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Đã huỷ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/wallet/balance:
+    get:
+      tags: [Wallet]
+      operationId: getWalletBalance
+      summary: Số dư ví (available / held)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      available:
+                        $ref: '#/components/schemas/Money'
+                      held:
+                        $ref: '#/components/schemas/Money'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/wallet/transactions:
+    get:
+      tags: [Wallet]
+      operationId: listWalletTransactions
+      summary: Biến động ví (bút toán ledger của tài khoản)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WalletTransaction'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/wallet/statement:
+    get:
+      tags: [Wallet]
+      operationId: getWalletStatement
+      summary: Sao kê ví theo khoảng thời gian
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WalletTransaction'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/wallet/deposit-intents:
+    post:
+      tags: [Wallet]
+      operationId: createDepositIntent
+      summary: Tạo yêu cầu nạp ví (chuyển khoản thủ công / MockPay ở sandbox)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_minor, currency, method]
+              properties:
+                amount_minor: { type: string, description: 'Số tiền theo minor units, integer dạng string' }
+                currency: { type: string, example: VND }
+                method: { type: string, enum: [BANK_TRANSFER, MOCKPAY] }
+      responses:
+        '201':
+          description: Đã tạo yêu cầu nạp (chờ duyệt maker-checker)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      status: { type: string, example: PENDING }
+                      amount_minor: { type: string }
+                      currency: { type: string }
+                      reference: { type: string, description: 'Nội dung chuyển khoản / mã tham chiếu' }
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/wallet/transfers:
+    post:
+      tags: [Wallet]
+      operationId: createWalletTransfer
+      summary: Chuyển ví nội bộ cho người dùng khác
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_user_id, amount_minor, currency]
+              properties:
+                to_user_id: { type: string }
+                amount_minor: { type: string }
+                currency: { type: string, example: VND }
+                note: { type: string }
+      responses:
+        '201':
+          description: Đã chuyển
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WalletTransaction'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/cards/products:
+    get:
+      tags: [Cards]
+      operationId: listCardProducts
+      summary: Sản phẩm thẻ cào/PIN có thể mua (kèm tồn kho khả dụng)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/cards/purchases:
+    post:
+      tags: [Cards]
+      operationId: purchaseCards
+      summary: Mua thẻ — reserve + giao mã PIN/serial trong phản hồi khi thành công
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variant_id, qty]
+              properties:
+                variant_id: { type: string }
+                qty: { type: integer, minimum: 1 }
+      responses:
+        '201':
+          description: Đã mua và giao mã
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/cards/orders/{id}:
+    get:
+      tags: [Cards]
+      operationId: getCardOrder
+      summary: Chi tiết đơn mua thẻ (mã đã giao chỉ hiển thị theo policy giao 1 lần)
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/card-exchange/submissions:
+    post:
+      tags: [CardExchange]
+      operationId: submitCardExchange
+      summary: Nộp thẻ gạch (đổi thẻ cào lấy số dư ví theo chiết khấu cấu hình)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [carrier, face_value_minor, serial, pin]
+              properties:
+                carrier: { type: string, example: VIETTEL }
+                face_value_minor: { type: string }
+                serial: { type: string }
+                pin: { type: string, description: 'Chỉ gửi qua kênh đã ký HMAC; server lưu fingerprint + bản mã hoá, log luôn mask' }
+      responses:
+        '201':
+          description: Đã nhận thẻ, chờ xử lý (Manual/Mock) hoặc có kết quả ngay
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ExchangeSubmission'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+    get:
+      tags: [CardExchange]
+      operationId: listCardExchangeSubmissions
+      summary: Danh sách thẻ đã nộp của đối tác
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ExchangeSubmission'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/card-exchange/submissions/{id}:
+    get:
+      tags: [CardExchange]
+      operationId: getCardExchangeSubmission
+      summary: Trạng thái một lần gạch thẻ
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ExchangeSubmission'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/me:
+    get:
+      tags: [Agents]
+      operationId: getAgentMe
+      summary: Thông tin đại lý của chính đối tác (cấp, hạn mức công nợ, số dư)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Agent'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/network:
+    get:
+      tags: [Agents]
+      operationId: getAgentNetwork
+      summary: Cây mạng lưới đại lý cấp dưới (trong scope của đối tác)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Agent'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/sub-agents:
+    post:
+      tags: [Agents]
+      operationId: createSubAgent
+      summary: Tạo đại lý cấp dưới
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, full_name]
+              properties:
+                email: { type: string, format: email }
+                full_name: { type: string }
+                level_code: { type: string, description: 'Mã cấp đại lý (dữ liệu cấu hình, ví dụ SILVER/GOLD)' }
+      responses:
+        '201':
+          description: Đã tạo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Agent'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/pricing:
+    get:
+      tags: [Agents]
+      operationId: getAgentPricing
+      summary: Bảng giá áp cho cấp đại lý của đối tác
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Price'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/commissions:
+    get:
+      tags: [Agents]
+      operationId: listAgentCommissions
+      summary: Hoa hồng của đại lý (pending / available / paid)
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [PENDING, AVAILABLE, PAID, REVERSED] }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageMeta'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: string }
+                            order_id: { type: string }
+                            amount_minor: { type: string }
+                            currency: { type: string }
+                            status: { type: string }
+                            available_at: { type: [string, 'null'], format: date-time }
+                            created_at: { type: string, format: date-time }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/agents/reports:
+    get:
+      tags: [Agents]
+      operationId: getAgentReports
+      summary: Báo cáo tổng hợp nhánh (doanh số, số đơn, hoa hồng theo kỳ)
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      total_sales:
+                        $ref: '#/components/schemas/Money'
+                      order_count: { type: integer }
+                      commission_total:
+                        $ref: '#/components/schemas/Money'
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/webhooks/{provider}:
+    post:
+      tags: [Webhooks]
+      operationId: providerWebhook
+      summary: Webhook inbound từ nhà cung cấp (verify HMAC bằng PROVIDER_WEBHOOK_SECRET, dedupe theo event id)
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string }
+          description: Mã nhà cung cấp, ví dụ MOCK hoặc MANUAL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id: { type: string }
+                event_type: { type: string }
+                data: { type: object, additionalProperties: true }
+      responses:
+        '200':
+          description: Đã nhận (kể cả khi event trùng — dedupe, không xử lý lặp)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received: { type: boolean }
+                  request_id: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /chargingws/v2:
+    post:
+      tags: [ChargingCompat]
+      summary: "Gạch thẻ tương thích chuẩn thị trường (command=charging|check)"
+      description: |
+        Chuẩn chung các web gạch thẻ VN (xem docs/research/card-exchange-sites.md).
+        Chấp nhận form-urlencoded hoặc JSON, cả field `serial` lẫn alias `seri`.
+        Sign MD5 — chấp nhận cả 2 công thức:
+          legacy:   md5(partner_key + code + serial)
+          extended: md5(partner_key + code + command + partner_id + request_id + serial + telco)
+          check:    md5(partner_key + command + partner_id + request_id)
+        Status: 99 đang xử lý, 1 đúng mệnh giá, 2 sai mệnh giá (tính theo mệnh giá thật, trừ penalty cấu hình),
+        3 thẻ lỗi, 4 bảo trì. Lỗi request: 100 chung, 101 check không thấy, 102 sai sign/IP/dữ liệu, 103 exception, 104 sai command.
+        request_id duy nhất theo partner -> idempotency của SunCard, trùng không tạo đơn/bút toán mới.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [command, partner_id, request_id, sign]
+              properties:
+                command: { type: string, enum: [charging, check] }
+                partner_id: { type: string, example: demo-partner }
+                request_id: { type: string }
+                telco: { type: string, example: VIETTEL, description: "VIETTEL|VINAPHONE|MOBIFONE|VNMOBI|ZING|GARENA|VCOIN|GATE|SCOIN" }
+                amount: { type: integer, example: 100000, description: "Mệnh giá khai báo (VNĐ)" }
+                serial: { type: string }
+                seri: { type: string, description: "Alias của serial (một số tài liệu dùng seri)" }
+                code: { type: string, description: "Mã thẻ/PIN" }
+                sign: { type: string }
+      responses:
+        "200":
+          description: "Kết quả gạch thẻ / tra cứu (format thị trường, không bọc envelope)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trans_id: { type: string }
+                  request_id: { type: string }
+                  status: { type: integer, example: 99 }
+                  message: { type: string }
+                  value: { type: integer, description: "Mệnh giá thật" }
+                  declared_value: { type: integer }
+                  amount: { type: integer, description: "Thực nhận sau phí (và penalty nếu sai mệnh giá)" }
+                  telco: { type: string }
+                  serial: { type: string }
+                  code: { type: string }
+                  callback_sign: { type: string, description: "md5(partner_key + code + serial)" }
+    get:
+      tags: [ChargingCompat]
+      summary: "Bản GET của charging/check (thị trường chấp nhận cả GET)"
+      parameters:
+        - { name: command, in: query, required: true, schema: { type: string } }
+        - { name: partner_id, in: query, required: true, schema: { type: string } }
+        - { name: request_id, in: query, required: true, schema: { type: string } }
+        - { name: sign, in: query, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "Như POST" }
+  /chargingws/v2/getfee:
+    get:
+      tags: [ChargingCompat]
+      summary: "Bảng phí gạch thẻ của partner (đồng bộ tự động cho web con)"
+      parameters:
+        - { name: partner_id, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: "Mảng phí từ bảng exchange_fee_rules theo nhóm phí của partner"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    telco: { type: string }
+                    value: { type: integer }
+                    fees: { type: number, description: "Phí %" }
+                    penalty: { type: number, description: "Phạt sai mệnh giá %" }
+
+components:
+  securitySchemes:
+    hmacAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        API key + HMAC-SHA256. Header bắt buộc:
+        Authorization: Bearer <api_key>; X-Client-Id: <client_id>;
+        X-Timestamp: <unix seconds>; X-Nonce: <unique per request>;
+        X-Signature: hex(HMAC-SHA256(secret, "METHOD\npath\ntimestamp\nnonce\nsha256(body)")).
+        Timestamp lệch quá 300s hoặc nonce đã dùng sẽ bị từ chối (REPLAY_DETECTED).
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema: { type: string }
+      description: Cursor của trang tiếp theo (lấy từ next_cursor của phản hồi trước)
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string }
+      description: Khoá chống trùng cho request tạo giao dịch; giữ nguyên khi retry
+  responses:
+    Error:
+      description: Lỗi theo envelope thống nhất
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          examples:
+            insufficientBalance:
+              value:
+                error: { code: INSUFFICIENT_BALANCE, message: 'Số dư khả dụng không đủ' }
+                request_id: req_01JEXAMPLE0000000000000
+  schemas:
+    Money:
+      type: object
+      required: [amount_minor, currency]
+      properties:
+        amount_minor:
+          type: string
+          description: Số tiền theo minor units — integer dạng string, không dùng float
+          example: '10000'
+        currency:
+          type: string
+          example: VND
+    PageMeta:
+      type: object
+      properties:
+        next_cursor:
+          type: [string, 'null']
+        request_id: { type: string }
+    ErrorEnvelope:
+      type: object
+      required: [error, request_id]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - AUTH_INVALID
+                - SIGNATURE_INVALID
+                - REPLAY_DETECTED
+                - RATE_LIMITED
+                - PERMISSION_DENIED
+                - PRODUCT_NOT_FOUND
+                - REGION_UNSUPPORTED
+                - PLAYER_INVALID
+                - INSUFFICIENT_BALANCE
+                - CREDIT_LIMIT_EXCEEDED
+                - DUPLICATE_REQUEST
+                - PROVIDER_UNAVAILABLE
+                - ORDER_PENDING
+                - ORDER_UNKNOWN
+                - ORDER_FAILED
+                - VALIDATION_EXPIRED
+            message: { type: string }
+        request_id: { type: string }
+    Category:
+      type: object
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [CARD, GAME, GIFT] }
+    ProductVariant:
+      type: object
+      properties:
+        id: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        face_value:
+          $ref: '#/components/schemas/Money'
+        price:
+          $ref: '#/components/schemas/Money'
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        category_id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [CARD_PIN, GAME_TOPUP, GIFT_CARD] }
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            description: { type: [string, 'null'] }
+            fields:
+              type: array
+              description: Trường nhập cần thiết khi mua/nạp (UID, server, region...)
+              items:
+                type: object
+                properties:
+                  key: { type: string }
+                  label: { type: string }
+                  required: { type: boolean }
+    Game:
+      type: object
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        publisher: { type: [string, 'null'] }
+        currency_name: { type: [string, 'null'], description: 'Đơn vị tiền trong game (Kim cương, UC...)' }
+    Region:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              name: { type: string }
+    Price:
+      type: object
+      properties:
+        variant_id: { type: string }
+        face_value:
+          $ref: '#/components/schemas/Money'
+        price:
+          $ref: '#/components/schemas/Money'
+        discount_bps: { type: integer, description: 'Chiết khấu (basis points) đã áp theo precedence' }
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        validation_token: { type: string, description: 'Token từ /v1/topups/validate đối với đơn nạp game' }
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [variant_id, qty]
+            properties:
+              variant_id: { type: string }
+              qty: { type: integer, minimum: 1 }
+              target:
+                type: object
+                description: Dữ liệu đích cho nạp game (player_id, region, server)
+                additionalProperties: { type: string }
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        code: { type: string }
+        type: { type: string, enum: [TOPUP, CARD_PURCHASE, EXCHANGE] }
+        status:
+          type: string
+          description: 'State machine: CREATED → VALIDATING → RESERVED → SUBMITTING → PENDING → PROCESSING → SUCCESS | FAILED | UNKNOWN | REVIEW | REFUND_PENDING → REFUNDED | CANCELLED. UNKNOWN nghĩa là đang xác minh với provider, không đồng nghĩa thất bại.'
+          enum: [CREATED, VALIDATING, RESERVED, SUBMITTING, PENDING, PROCESSING, SUCCESS, FAILED, UNKNOWN, REVIEW, REFUND_PENDING, REFUNDED, CANCELLED]
+        total:
+          $ref: '#/components/schemas/Money'
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              variant_id: { type: string }
+              name: { type: string }
+              qty: { type: integer }
+              unit_price:
+                $ref: '#/components/schemas/Money'
+        cards:
+          type: array
+          description: Mã thẻ đã giao (chỉ có khi đơn mua thẻ SUCCESS)
+          items:
+            type: object
+            properties:
+              serial: { type: string }
+              pin: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    WalletTransaction:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        amount:
+          $ref: '#/components/schemas/Money'
+        balance_after:
+          $ref: '#/components/schemas/Money'
+        ref_type: { type: [string, 'null'] }
+        ref_id: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+    ExchangeSubmission:
+      type: object
+      properties:
+        id: { type: string }
+        order_id: { type: string }
+        carrier: { type: string }
+        face_value:
+          $ref: '#/components/schemas/Money'
+        serial_masked: { type: [string, 'null'] }
+        status: { type: string }
+        payout:
+          description: Số tiền cộng ví sau chiết khấu (có khi đã xác nhận)
+          anyOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
+        created_at: { type: string, format: date-time }
+    Agent:
+      type: object
+      properties:
+        id: { type: string }
+        code: { type: string }
+        level_code: { type: string }
+        status: { type: string }
+        parent_id: { type: [string, 'null'] }
+        credit_limit:
+          $ref: '#/components/schemas/Money'
+        credit_outstanding:
+          $ref: '#/components/schemas/Money'

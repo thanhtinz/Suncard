@@ -1,0 +1,1128 @@
+// SunCard — Prisma schema (PostgreSQL). Money = BigInt minor units. Times UTC.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Identity ----------
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  phone String? @unique
+  passwordHash String
+  status String @default("ACTIVE") // ACTIVE|LOCKED|DISABLED
+  kycStatus String @default("NONE") // NONE|PENDING|VERIFIED|REJECTED
+  totpSecret String?
+  totpEnabled Boolean @default(false)
+  failedLogins Int @default(0)
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("users")
+}
+model UserProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  fullName String
+  avatarUrl String?
+  address String?
+  idNumber String?
+  dateOfBirth DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("user_profiles")
+}
+model Role {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  description String?
+  isSystem Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@map("roles")
+}
+model Permission {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  group String @default("general")
+  createdAt DateTime @default(now())
+  @@map("permissions")
+}
+model UserRole {
+  id String @id @default(cuid())
+  userId String
+  roleId String
+  scopeType String @default("GLOBAL") // GLOBAL|AGENT_BRANCH|SELF
+  scopeId String?
+  createdAt DateTime @default(now())
+  @@unique([userId, roleId, scopeId])
+  @@index([userId])
+  @@map("user_roles")
+}
+model RolePermission {
+  id String @id @default(cuid())
+  roleId String
+  permissionId String
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+model Session {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  ip String?
+  userAgent String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@map("sessions")
+}
+model UserDevice {
+  id String @id @default(cuid())
+  userId String
+  deviceId String
+  platform String?
+  lastSeenAt DateTime @default(now())
+  trusted Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@unique([userId, deviceId])
+  @@map("user_devices")
+}
+model VerificationRecord {
+  id String @id @default(cuid())
+  userId String
+  type String // EMAIL|PHONE|KYC|STEP_UP
+  target String?
+  codeHash String?
+  status String @default("PENDING")
+  expiresAt DateTime?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, type])
+  @@map("verification_records")
+}
+
+// ---------- Agent ----------
+model AgentLevel {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  rank Int
+  discountBps Int @default(0) // chiết khấu thêm theo cấp (basis points)
+  creditLimitMinor BigInt @default(0)
+  requirements Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@map("agent_levels")
+}
+model Agent {
+  id String @id @default(cuid())
+  userId String @unique
+  levelId String
+  parentId String?
+  code String @unique
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([parentId])
+  @@map("agents")
+}
+model AgentClosure {
+  id String @id @default(cuid())
+  ancestorId String
+  descendantId String
+  depth Int
+  @@unique([ancestorId, descendantId])
+  @@index([descendantId])
+  @@index([ancestorId])
+  @@map("agent_closure")
+}
+model AgentRelationHistory {
+  id String @id @default(cuid())
+  agentId String
+  oldParentId String?
+  newParentId String?
+  changedBy String?
+  reason String?
+  createdAt DateTime @default(now())
+  @@index([agentId])
+  @@map("agent_relation_history")
+}
+model AgentInvitation {
+  id String @id @default(cuid())
+  inviterAgentId String
+  email String
+  levelId String?
+  token String @unique
+  status String @default("PENDING") // PENDING|ACCEPTED|EXPIRED|REVOKED
+  expiresAt DateTime
+  acceptedUserId String?
+  createdAt DateTime @default(now())
+  @@index([email])
+  @@map("agent_invitations")
+}
+
+// ---------- Catalog ----------
+model Category {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  kind String @default("CARD") // CARD|GAME|GIFT
+  icon String?
+  sortOrder Int @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@map("categories")
+}
+model Product {
+  id String @id @default(cuid())
+  categoryId String
+  code String @unique
+  name String
+  type String // CARD_PIN|GAME_TOPUP|GIFT_CARD
+  description String?
+  imageUrl String?
+  isActive Boolean @default(true)
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([categoryId])
+  @@map("products")
+}
+model ProductVariant {
+  id String @id @default(cuid())
+  productId String
+  sku String @unique
+  name String
+  faceValueMinor BigInt // mệnh giá gốc
+  currency String @default("VND")
+  basePriceMinor BigInt // giá vốn/mặc định (minor)
+  isActive Boolean @default(true)
+  sortOrder Int @default(0)
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([productId])
+  @@map("product_variants")
+}
+model ProductField {
+  id String @id @default(cuid())
+  productId String
+  key String // uid|server|region|phone...
+  label String
+  type String @default("text") // text|select
+  required Boolean @default(true)
+  options Json?
+  sortOrder Int @default(0)
+  @@unique([productId, key])
+  @@map("product_fields")
+}
+model GameCatalog {
+  id String @id @default(cuid())
+  productId String @unique
+  slug String @unique
+  publisher String?
+  currencyName String? // tên đơn vị trong game (Kim cương, UC...)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@map("game_catalog")
+}
+model GameRegion {
+  id String @id @default(cuid())
+  gameId String
+  code String
+  name String
+  isActive Boolean @default(true)
+  @@unique([gameId, code])
+  @@map("game_regions")
+}
+model GameServer {
+  id String @id @default(cuid())
+  gameId String
+  regionId String?
+  code String
+  name String
+  isActive Boolean @default(true)
+  @@unique([gameId, code])
+  @@map("game_servers")
+}
+model PricingPlan {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  scopeType String @default("DEFAULT") // DEFAULT|CUSTOMER_GROUP|AGENT_LEVEL|BRANCH|ACCOUNT
+  scopeId String?
+  priority Int @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@map("pricing_plans")
+}
+model PriceRule {
+  id String @id @default(cuid())
+  planId String
+  productId String?
+  variantId String?
+  discountBps Int @default(0)
+  fixedPriceMinor BigInt?
+  minMarginBps Int?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@index([planId])
+  @@map("price_rules")
+}
+model PriceSnapshot {
+  id String @id @default(cuid())
+  orderId String
+  variantId String
+  faceValueMinor BigInt
+  unitPriceMinor BigInt
+  discountBps Int @default(0)
+  planId String?
+  ruleId String?
+  source String // ACCOUNT_OVERRIDE|BRANCH|AGENT_LEVEL|CUSTOMER_GROUP|DEFAULT
+  currency String @default("VND")
+  createdAt DateTime @default(now())
+  @@index([orderId])
+  @@map("price_snapshots")
+}
+model FxRate {
+  id String @id @default(cuid())
+  fromCurrency String
+  toCurrency String
+  rate String // decimal dạng string, tránh float tiền
+  effectiveAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  @@unique([fromCurrency, toCurrency])
+  @@map("fx_rates")
+}
+
+// ---------- Orders ----------
+model Order {
+  id String @id @default(cuid())
+  code String @unique
+  userId String
+  agentId String?
+  type String // TOPUP|CARD_PURCHASE|EXCHANGE
+  status String @default("CREATED")
+  currency String @default("VND")
+  subtotalMinor BigInt @default(0)
+  discountMinor BigInt @default(0)
+  feeMinor BigInt @default(0)
+  totalMinor BigInt @default(0)
+  idempotencyKey String
+  requestHash String?
+  providerId String?
+  providerRef String?
+  failReason String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([agentId])
+  @@map("orders")
+}
+model OrderItem {
+  id String @id @default(cuid())
+  orderId String
+  productId String
+  variantId String?
+  name String
+  qty Int @default(1)
+  unitPriceMinor BigInt
+  faceValueMinor BigInt @default(0)
+  totalMinor BigInt
+  targetData Json? // UID/server/region cho topup
+  createdAt DateTime @default(now())
+  @@index([orderId])
+  @@map("order_items")
+}
+model OrderStatusHistory {
+  id String @id @default(cuid())
+  orderId String
+  fromStatus String?
+  toStatus String
+  actor String @default("system")
+  note String?
+  createdAt DateTime @default(now())
+  @@index([orderId])
+  @@map("order_status_history")
+}
+model OrderFulfillment {
+  id String @id @default(cuid())
+  orderId String
+  kind String // CARD_DELIVERY|PROVIDER_TOPUP|MANUAL
+  status String @default("PENDING")
+  detail Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([orderId])
+  @@map("order_fulfillments")
+}
+model TopupOrder {
+  id String @id @default(cuid())
+  orderId String @unique
+  gameId String?
+  playerId String
+  playerName String?
+  regionCode String?
+  serverCode String?
+  providerTxnId String?
+  inquiryCount Int @default(0)
+  lastInquiryAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("topup_orders")
+}
+model ExchangeOrder {
+  id String @id @default(cuid())
+  orderId String @unique
+  carrier String
+  faceValueMinor BigInt
+  serialMasked String?
+  pinFingerprint String
+  declaredValueMinor BigInt @default(0)
+  acceptedValueMinor BigInt?
+  feeBps Int @default(0)
+  payoutMinor BigInt?
+  wrongValue Boolean @default(false)
+  penaltyMinor BigInt @default(0)
+  providerId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([pinFingerprint])
+  @@map("exchange_orders")
+}
+model CardPurchaseOrder {
+  id String @id @default(cuid())
+  orderId String @unique
+  variantId String
+  qty Int @default(1)
+  deliveredAt DateTime?
+  createdAt DateTime @default(now())
+  @@map("card_purchase_orders")
+}
+
+// ---------- Provider ----------
+model Provider {
+  id String @id @default(cuid())
+  code String @unique // MANUAL|MOCK|...
+  name String
+  type String @default("AGGREGATOR") // MANUAL|MOCK|API
+  status String @default("ACTIVE") // ACTIVE|DISABLED|MAINTENANCE
+  priority Int @default(100)
+  config Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("providers")
+}
+model ProviderCredential {
+  id String @id @default(cuid())
+  providerId String
+  name String
+  secretRef String // chỉ giữ REFERENCE (env:vault:...), không plaintext
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@index([providerId])
+  @@map("provider_credentials")
+}
+model ProviderCapability {
+  id String @id @default(cuid())
+  providerId String
+  productType String // CARD_PIN|GAME_TOPUP|EXCHANGE
+  region String @default("VN")
+  currency String @default("VND")
+  supported Boolean @default(true)
+  note String?
+  @@unique([providerId, productType, region, currency])
+  @@map("provider_capabilities")
+}
+model ProviderProduct {
+  id String @id @default(cuid())
+  providerId String
+  variantId String?
+  externalSku String
+  name String
+  costMinor BigInt @default(0)
+  currency String @default("VND")
+  stock Int?
+  isActive Boolean @default(true)
+  @@unique([providerId, externalSku])
+  @@index([variantId])
+  @@map("provider_products")
+}
+model ProviderPriceSnapshot {
+  id String @id @default(cuid())
+  providerId String
+  externalSku String
+  costMinor BigInt
+  currency String @default("VND")
+  capturedAt DateTime @default(now())
+  @@index([providerId, externalSku])
+  @@map("provider_price_snapshots")
+}
+model ProviderTransaction {
+  id String @id @default(cuid())
+  providerId String
+  orderId String?
+  externalRef String?
+  action String // CREATE|INQUIRY|CANCEL|WEBHOOK
+  status String
+  requestMasked Json?
+  responseMasked Json?
+  latencyMs Int?
+  createdAt DateTime @default(now())
+  @@index([orderId])
+  @@index([providerId])
+  @@map("provider_transactions")
+}
+model ProviderWebhookEvent {
+  id String @id @default(cuid())
+  providerId String
+  eventId String
+  eventType String?
+  payloadHash String
+  status String @default("RECEIVED") // RECEIVED|PROCESSED|DUPLICATE|FAILED
+  receivedAt DateTime @default(now())
+  processedAt DateTime?
+  @@unique([providerId, eventId])
+  @@map("provider_webhook_events")
+}
+model ProviderHealthMetric {
+  id String @id @default(cuid())
+  providerId String
+  windowStart DateTime
+  total Int @default(0)
+  success Int @default(0)
+  failed Int @default(0)
+  unknown Int @default(0)
+  avgLatencyMs Int @default(0)
+  circuitState String @default("CLOSED") // CLOSED|OPEN|HALF_OPEN
+  consecutiveFails Int @default(0)
+  circuitOpenedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([providerId])
+  @@map("provider_health_metrics")
+}
+model ProviderReconciliationRun {
+  id String @id @default(cuid())
+  providerId String
+  periodStart DateTime
+  periodEnd DateTime
+  status String @default("RUNNING")
+  totalItems Int @default(0)
+  matched Int @default(0)
+  mismatched Int @default(0)
+  createdBy String?
+  createdAt DateTime @default(now())
+  @@index([providerId])
+  @@map("provider_reconciliation_runs")
+}
+model ProviderReconciliationItem {
+  id String @id @default(cuid())
+  runId String
+  orderId String?
+  externalRef String?
+  expectedMinor BigInt @default(0)
+  actualMinor BigInt @default(0)
+  status String // MATCHED|AMOUNT_DIFF|MISSING_LOCAL|MISSING_REMOTE|STATUS_DIFF
+  detail Json?
+  createdAt DateTime @default(now())
+  @@index([runId])
+  @@map("provider_reconciliation_items")
+}
+model ReconciliationCase {
+  id String @id @default(cuid())
+  runId String?
+  providerId String?
+  orderId String?
+  type String
+  severity String @default("MEDIUM") // LOW|MEDIUM|HIGH|CRITICAL
+  status String @default("OPEN") // OPEN|INVESTIGATING|RESOLVED|ESCALATED
+  ownerId String?
+  evidence Json?
+  resolution String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resolvedAt DateTime?
+  @@index([status])
+  @@map("reconciliation_cases")
+}
+
+// ---------- Wallet / Ledger ----------
+model Wallet {
+  id String @id @default(cuid())
+  userId String @unique
+  currency String @default("VND")
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("wallets")
+}
+model LedgerAccount {
+  id String @id @default(cuid())
+  code String @unique // VD WALLET:<userId>:AVAILABLE, PLATFORM:CASH, PROVIDER:MOCK...
+  ownerType String // USER|PLATFORM|PROVIDER|SYSTEM
+  ownerId String?
+  kind String // AVAILABLE|HELD|CASH|REVENUE|COST|COMMISSION|CREDIT|EXCHANGE
+  currency String @default("VND")
+  balanceMinor BigInt @default(0) // projection, chỉ cập nhật qua posting
+  heldMinor BigInt @default(0)
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([ownerType, ownerId])
+  @@map("ledger_accounts")
+}
+model LedgerTransaction {
+  id String @id @default(cuid())
+  code String @unique
+  type String // DEPOSIT|ORDER_HOLD|ORDER_SETTLE|ORDER_RELEASE|REFUND|COMMISSION|TRANSFER|EXCHANGE_PAYOUT|WITHDRAWAL|CREDIT|ADJUSTMENT|REVERSAL|GENESIS
+  refType String?
+  refId String?
+  idempotencyKey String? @unique
+  description String?
+  reversedTxId String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  @@index([refType, refId])
+  @@map("ledger_transactions")
+}
+model LedgerEntry {
+  id String @id @default(cuid())
+  transactionId String
+  accountId String
+  direction String // DEBIT|CREDIT
+  amountMinor BigInt
+  currency String @default("VND")
+  balanceAfterMinor BigInt @default(0)
+  createdAt DateTime @default(now())
+  @@index([transactionId])
+  @@index([accountId])
+  @@map("ledger_entries")
+}
+model WalletHold {
+  id String @id @default(cuid())
+  walletId String
+  orderId String?
+  amountMinor BigInt
+  currency String @default("VND")
+  status String @default("ACTIVE") // ACTIVE|SETTLED|RELEASED|EXPIRED
+  expiresAt DateTime?
+  idempotencyKey String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([walletId, status])
+  @@map("wallet_holds")
+}
+model WalletTransfer {
+  id String @id @default(cuid())
+  fromUserId String
+  toUserId String
+  amountMinor BigInt
+  feeMinor BigInt @default(0)
+  currency String @default("VND")
+  note String?
+  idempotencyKey String
+  ledgerTxId String?
+  createdAt DateTime @default(now())
+  @@unique([fromUserId, idempotencyKey])
+  @@map("wallet_transfers")
+}
+model Deposit {
+  id String @id @default(cuid())
+  userId String
+  method String // BANK_TRANSFER|MOCKPAY
+  amountMinor BigInt
+  currency String @default("VND")
+  status String @default("PENDING") // PENDING|APPROVED|REJECTED|CANCELLED
+  reference String?
+  makerId String?
+  checkerId String?
+  ledgerTxId String?
+  idempotencyKey String?
+  note String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, idempotencyKey])
+  @@index([status])
+  @@map("deposits")
+}
+model WithdrawalRequest {
+  id String @id @default(cuid())
+  userId String
+  amountMinor BigInt
+  feeMinor BigInt @default(0)
+  currency String @default("VND")
+  bankInfo Json?
+  status String @default("PENDING") // PENDING|APPROVED|PAID|REJECTED|CANCELLED
+  makerId String?
+  checkerId String?
+  holdId String?
+  ledgerTxId String?
+  idempotencyKey String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, idempotencyKey])
+  @@index([status])
+  @@map("withdrawal_requests")
+}
+model CreditAccount {
+  id String @id @default(cuid())
+  userId String @unique
+  agentId String?
+  limitMinor BigInt @default(0)
+  outstandingMinor BigInt @default(0)
+  reservedMinor BigInt @default(0)
+  currency String @default("VND")
+  status String @default("ACTIVE")
+  dueDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("credit_accounts")
+}
+model CreditTransaction {
+  id String @id @default(cuid())
+  creditAccountId String
+  type String // DRAW|REPAY|RESERVE|RELEASE|ADJUST
+  amountMinor BigInt
+  refType String?
+  refId String?
+  ledgerTxId String?
+  idempotencyKey String? @unique
+  createdBy String?
+  createdAt DateTime @default(now())
+  @@index([creditAccountId])
+  @@map("credit_transactions")
+}
+model FinancialApprovalRequest {
+  id String @id @default(cuid())
+  kind String // DEPOSIT|WITHDRAWAL|ADJUSTMENT|CREDIT_LIMIT
+  refId String?
+  amountMinor BigInt @default(0)
+  currency String @default("VND")
+  status String @default("PENDING") // PENDING|APPROVED|REJECTED
+  makerId String
+  checkerId String?
+  payload Json?
+  note String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, kind])
+  @@map("financial_approval_requests")
+}
+model PaymentIntent {
+  id String @id @default(cuid())
+  userId String
+  purpose String // DEPOSIT|ORDER
+  amountMinor BigInt
+  currency String @default("VND")
+  method String @default("MOCKPAY")
+  status String @default("CREATED") // CREATED|PAID|FAILED|EXPIRED|CANCELLED
+  externalRef String?
+  callbackSig String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+  @@map("payment_intents")
+}
+
+// ---------- Cards ----------
+model CardBatch {
+  id String @id @default(cuid())
+  code String @unique
+  providerId String?
+  variantId String
+  source String @default("IMPORT") // IMPORT|PROVIDER
+  totalCards Int @default(0)
+  status String @default("ACTIVE")
+  importedBy String?
+  note String?
+  createdAt DateTime @default(now())
+  @@index([variantId])
+  @@map("card_batches")
+}
+model CardInventory {
+  id String @id @default(cuid())
+  batchId String
+  variantId String
+  serialEnc String
+  pinEnc String
+  serialFingerprint String
+  pinFingerprint String
+  status String @default("AVAILABLE") // AVAILABLE|RESERVED|SOLD|DELIVERED|QUARANTINED|EXPIRED|VOID
+  reservedOrderId String?
+  reservedAt DateTime?
+  reserveExpiresAt DateTime?
+  soldOrderId String?
+  deliveredAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([variantId, pinFingerprint])
+  @@index([variantId, status])
+  @@index([serialFingerprint])
+  @@map("card_inventory")
+}
+model CardReservation {
+  id String @id @default(cuid())
+  cardId String
+  orderId String
+  status String @default("ACTIVE") // ACTIVE|DELIVERED|RELEASED|EXPIRED
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([cardId, orderId])
+  @@index([orderId])
+  @@map("card_reservations")
+}
+model CardDelivery {
+  id String @id @default(cuid())
+  cardId String
+  orderId String
+  userId String
+  deliveredAt DateTime @default(now())
+  revealCount Int @default(0)
+  lastRevealAt DateTime?
+  @@unique([cardId, orderId])
+  @@map("card_deliveries")
+}
+model CardAccessAudit {
+  id String @id @default(cuid())
+  cardId String
+  userId String
+  action String // REVEAL|RESERVE|DELIVER|RELEASE
+  ip String?
+  result String // OK|DENIED
+  orderId String?
+  purpose String?
+  correlationId String?
+  deviceId String?
+  createdAt DateTime @default(now())
+  @@index([cardId])
+  @@index([userId])
+  @@map("card_access_audit")
+}
+
+// ---------- Commission ----------
+model CommissionPlan {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@map("commission_plans")
+}
+model CommissionRule {
+  id String @id @default(cuid())
+  planId String
+  beneficiaryType String // AGENT_UPLINE|AGENT_SELF|SALES
+  levelRank Int? // áp dụng cho upline ở độ sâu/rank này
+  productType String?
+  base String @default("MARGIN") // MARGIN|REVENUE
+  rateBps Int @default(0)
+  fixedMinor BigInt?
+  vestingDays Int @default(0)
+  isActive Boolean @default(true)
+  @@index([planId])
+  @@map("commission_rules")
+}
+model CommissionEntry {
+  id String @id @default(cuid())
+  orderId String
+  beneficiaryUserId String
+  beneficiaryAgentId String?
+  ruleId String?
+  baseMinor BigInt @default(0)
+  amountMinor BigInt
+  currency String @default("VND")
+  status String @default("PENDING") // PENDING|AVAILABLE|PAID|REVERSED
+  availableAt DateTime?
+  settlementId String?
+  idempotencyKey String @unique
+  createdAt DateTime @default(now())
+  @@index([beneficiaryUserId, status])
+  @@index([orderId])
+  @@map("commission_entries")
+}
+model CommissionSettlement {
+  id String @id @default(cuid())
+  code String @unique
+  periodStart DateTime
+  periodEnd DateTime
+  totalMinor BigInt @default(0)
+  entryCount Int @default(0)
+  status String @default("DRAFT") // DRAFT|APPROVED|PAID
+  createdBy String?
+  createdAt DateTime @default(now())
+  @@map("commission_settlements")
+}
+
+// ---------- Platform ----------
+model ApiClient {
+  id String @id @default(cuid())
+  userId String?
+  name String
+  clientId String @unique
+  status String @default("ACTIVE")
+  environment String @default("SANDBOX") // SANDBOX|LIVE
+  ipAllowlist Json?
+  callbackUrl String?
+  callbackMethod String @default("POST") // POST|GET — callback chargingws
+  feeGroup String @default("API") // MEMBER|AGENT|API — nhóm phí gạch thẻ
+  createdAt DateTime @default(now())
+  @@map("api_clients")
+}
+model ApiKey {
+  id String @id @default(cuid())
+  clientId String
+  keyPrefix String
+  keyHash String @unique
+  secretHash String
+  secretEnc String? // secret ký HMAC, mã hoá AES-256-GCM (envelope), chỉ giải mã khi verify
+  scopes Json?
+  status String @default("ACTIVE")
+  lastUsedAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([clientId])
+  @@map("api_keys")
+}
+model ApiUsageLog {
+  id String @id @default(cuid())
+  clientId String?
+  apiKeyId String?
+  method String
+  path String
+  statusCode Int
+  requestId String?
+  ip String?
+  latencyMs Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([clientId])
+  @@map("api_usage_logs")
+}
+model WebhookEndpoint {
+  id String @id @default(cuid())
+  clientId String?
+  userId String?
+  url String
+  events Json
+  secretHash String
+  secretEnc String? // secret ký HMAC, mã hoá AES-256-GCM (envelope), chỉ giải mã khi verify
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  @@map("webhook_endpoints")
+}
+model WebhookDelivery {
+  id String @id @default(cuid())
+  endpointId String?
+  eventId String @unique
+  eventType String
+  resourceId String?
+  payload Json
+  signature String?
+  status String @default("PENDING") // PENDING|DELIVERED|FAILED|DEAD
+  attempts Int @default(0)
+  nextRetryAt DateTime?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, nextRetryAt])
+  @@map("webhook_deliveries")
+}
+model SupportTicket {
+  id String @id @default(cuid())
+  userId String
+  orderId String?
+  subject String
+  category String @default("GENERAL")
+  priority String @default("NORMAL")
+  status String @default("OPEN") // OPEN|IN_PROGRESS|WAITING|RESOLVED|CLOSED
+  assignedTo String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, status])
+  @@map("support_tickets")
+}
+model TicketMessage {
+  id String @id @default(cuid())
+  ticketId String
+  senderId String
+  senderType String // CUSTOMER|STAFF
+  body String
+  internal Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
+model Dispute {
+  id String @id @default(cuid())
+  orderId String
+  userId String
+  reason String
+  amountMinor BigInt @default(0)
+  status String @default("OPEN") // OPEN|INVESTIGATING|RESOLVED_REFUND|RESOLVED_REJECTED|ESCALATED
+  resolution String?
+  resolvedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([orderId])
+  @@map("disputes")
+}
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  type String
+  title String
+  body String?
+  resourceType String?
+  resourceId String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+model Document {
+  id String @id @default(cuid())
+  slug String @unique
+  title String
+  audience String @default("PUBLIC") // PUBLIC|AGENT|PARTNER|INTERNAL
+  status String @default("PUBLISHED")
+  currentVersionId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("documents")
+}
+model DocumentVersion {
+  id String @id @default(cuid())
+  documentId String
+  version Int
+  content String
+  createdBy String?
+  createdAt DateTime @default(now())
+  @@unique([documentId, version])
+  @@map("document_versions")
+}
+model AuditLog {
+  id String @id @default(cuid())
+  eventId String @unique @default(cuid())
+  actorId String?
+  actorType String @default("USER")
+  action String
+  entityType String?
+  entityId String?
+  result String? // SUCCESS|DENIED|FAILED|PENDING (bảng 17 spec bảo mật)
+  deviceId String?
+  correlationId String?
+  reason String?
+  approvalId String?
+  summary String?
+  before Json?
+  after Json?
+  ip String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+model FeatureFlag {
+  id String @id @default(cuid())
+  key String @unique
+  enabled Boolean @default(false)
+  config Json?
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  @@map("feature_flags")
+}
+model Setting {
+  id String @id @default(cuid())
+  key String @unique
+  value Json
+  group String @default("general")
+  description String?
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  @@map("settings")
+}
+model Refund {
+  id String @id @default(cuid())
+  orderId String
+  amountMinor BigInt
+  currency String @default("VND")
+  reason String?
+  status String @default("PENDING") // PENDING|COMPLETED|REJECTED
+  idempotencyKey String @unique
+  ledgerTxId String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([orderId])
+  @@map("refunds")
+}
+model ApiNonce {
+  id String @id @default(cuid())
+  clientId String
+  nonce String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@unique([clientId, nonce])
+  @@map("api_nonces")
+}
+
+// Bảng phí gạch thẻ: telco × mệnh giá × nhóm người dùng -> fees + penalty (doc nghiên cứu thị trường).
+// Dữ liệu mẫu khảo sát 06/11/2026, sửa ở Admin -> Cài đặt/Bảng phí. KHÔNG hard-code trong code.
+model ExchangeFeeRule {
+  id String @id @default(cuid())
+  telco String // VIETTEL|VINAPHONE|MOBIFONE|VNMOBI|ZING|GARENA|VCOIN|GATE|SCOIN
+  faceValueMinor BigInt
+  groupCode String // MEMBER|AGENT|API
+  feeBps Int // phí % dạng bps (2050 = 20.5%)
+  penaltyBps Int @default(5000) // phạt sai mệnh giá, bps của mệnh giá nhỏ hơn (5000 = 50%)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([telco, faceValueMinor, groupCode])
+  @@index([telco, groupCode])
+  @@map("exchange_fee_rules")
+}
+
+// Risk Engine (spec mục 9): hàng chờ duyệt rủi ro — đơn/mã bị giữ ở mức HIGH.
+model RiskReview {
+  id String @id @default(cuid())
+  userId String
+  orderId String?
+  action String // REVEAL|CARD_DELIVERY|TOPUP|EXCHANGE|LOGIN
+  score Int
+  level String // LOW|MEDIUM|HIGH|CRITICAL
+  signals Json?
+  status String @default("PENDING") // PENDING|APPROVED|REJECTED
+  reviewedBy String?
+  reviewNote String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, level])
+  @@index([userId])
+  @@map("risk_reviews")
+}
+
+// Login throttling (ACC-03): theo tài khoản + IP + thiết bị, khóa tăng dần.
+model LoginThrottle {
+  id String @id @default(cuid())
+  throttleKey String @unique // hash(email|ip|device)
+  fails Int @default(0)
+  lockCount Int @default(0)
+  lockedUntil DateTime?
+  lastFailAt DateTime?
+  updatedAt DateTime @updatedAt
+  @@map("login_throttles")
+}
