@@ -144,28 +144,32 @@ export default function CardShop({ products, loggedIn, fxEnabled, showUsd, vndPe
 
           <section>
             <StepHead n={3} title="Thông tin đơn hàng" />
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-2 border-[#F1E7D7] rounded-2xl px-5 py-4">
-              <span className="w-[86px] h-[52px] rounded-full bg-white shadow-soft border border-[#F7E9D2] flex items-center justify-center shrink-0"><Wordmark wm={product.wm} size="sm" /></span>
-              <div>
-                <b className="text-navy text-[16px] block">Thẻ {product.name}</b>
-                <span className="text-[13px] text-muted2">Mệnh giá: {fmt(variant.face)}đ</span>
+            <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-5 border-2 border-[#F1E7D7] rounded-2xl px-5 py-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <span className="w-[86px] h-[52px] rounded-full bg-white shadow-soft border border-[#F7E9D2] flex items-center justify-center shrink-0"><Wordmark wm={product.wm} size="sm" /></span>
+                <div className="min-w-0">
+                  <b className="text-navy text-[16px] block truncate">Thẻ {product.name}</b>
+                  <span className="text-[13px] text-muted2">Mệnh giá: {fmt(variant.face)}đ</span>
+                </div>
               </div>
-              <div className="sm:border-l sm:border-[#F1E7D7] sm:pl-5">
-                <span className="block text-xs text-muted2 mb-0.5">Giá bán{discount ? ` (đã giảm ${discount}%)` : ""}</span>
-                <b className="text-sundeep text-lg">{fmt(unit)}đ</b>
-              </div>
-              <div className="sm:border-l sm:border-[#F1E7D7] sm:pl-5">
-                <span className="block text-xs text-muted2 mb-0.5">Số lượng</span>
-                <span className="inline-flex items-center border-2 border-sunline rounded-full overflow-hidden">
-                  <button type="button" aria-label="Giảm số lượng" onClick={() => setQty(Math.max(1, qty - 1))} className="w-[34px] h-9 bg-[#FFF6E8] text-sundeep font-extrabold text-lg">−</button>
-                  <span className="min-w-[32px] text-center font-extrabold text-navy text-[15px]">{qty}</span>
-                  <button type="button" aria-label="Tăng số lượng" onClick={() => setQty(Math.min(maxQty, qty + 1))} className="w-[34px] h-9 bg-[#FFF6E8] text-sundeep font-extrabold text-lg">+</button>
-                </span>
-              </div>
-              <div className="sm:border-l sm:border-[#F1E7D7] sm:pl-5">
-                <span className="block text-xs text-muted2 mb-0.5">Thành tiền</span>
-                <b className="text-sundeep text-[22px]">{fmt(total)}đ</b>
-                {showUsd && <span className="block text-xs text-muted2">≈ ${(total / vndPerUsd).toFixed(2)}</span>}
+              <div className="grid grid-cols-3 items-end gap-2 border-t border-[#F7E9D2] pt-3.5 lg:contents">
+                <div className="lg:border-l lg:border-[#F1E7D7] lg:pl-5">
+                  <span className="block text-xs text-muted2 mb-0.5">Giá bán{discount ? ` (đã giảm ${discount}%)` : ""}</span>
+                  <b className="text-sundeep text-lg">{fmt(unit)}đ</b>
+                </div>
+                <div className="justify-self-center text-center lg:justify-self-auto lg:text-left lg:border-l lg:border-[#F1E7D7] lg:pl-5">
+                  <span className="block text-xs text-muted2 mb-0.5">Số lượng</span>
+                  <span className="inline-flex items-center border-2 border-sunline rounded-full overflow-hidden">
+                    <button type="button" aria-label="Giảm số lượng" onClick={() => setQty(Math.max(1, qty - 1))} className="w-[32px] h-9 bg-[#FFF6E8] text-sundeep font-extrabold text-lg">−</button>
+                    <span className="min-w-[28px] text-center font-extrabold text-navy text-[15px]">{qty}</span>
+                    <button type="button" aria-label="Tăng số lượng" onClick={() => setQty(Math.min(maxQty, qty + 1))} className="w-[32px] h-9 bg-[#FFF6E8] text-sundeep font-extrabold text-lg">+</button>
+                  </span>
+                </div>
+                <div className="justify-self-end text-right lg:justify-self-auto lg:text-left lg:border-l lg:border-[#F1E7D7] lg:pl-5">
+                  <span className="block text-xs text-muted2 mb-0.5">Thành tiền</span>
+                  <b className="text-sundeep text-[20px] lg:text-[22px]">{fmt(total)}đ</b>
+                  {showUsd && <span className="block text-xs text-muted2">≈ ${(total / vndPerUsd).toFixed(2)}</span>}
+                </div>
               </div>
             </div>
           </section>
