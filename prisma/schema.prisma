@@ -1201,3 +1201,18 @@ model LoginThrottle {
   updatedAt DateTime @updatedAt
   @@map("login_throttles")
 }
+
+// Token truy cập MCP cho AI Agent (Claude/ChatGPT...): chỉ lưu SHA-256 hash,
+// token thô hiện đúng 1 lần khi cấp. Quyền theo vai trò của user sở hữu token.
+model McpAccessToken {
+  id String @id @default(cuid())
+  userId String
+  name String
+  tokenHash String @unique
+  scopes String @default("READ")
+  lastUsedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@map("mcp_access_tokens")
+}
