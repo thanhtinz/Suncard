@@ -51,7 +51,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link className="block py-1 hover:text-sun2" href="/dai-ly">Đại lý & API</Link></div>
             <div><div className="font-bold text-white mb-3">Hỗ trợ</div>
               <Link className="block py-1 hover:text-sun2" href="/tro-giup">Trung tâm hỗ trợ</Link>
-              <Link className="block py-1 hover:text-sun2" href="/tai-lieu">Tài liệu API</Link>
+              <Link className="block py-1 hover:text-sun2" href="/tai-lieu/api">Tài liệu API</Link>
+              <Link className="block py-1 hover:text-sun2" href="/bai-viet">Bài viết & hướng dẫn</Link>
               <Link className="block py-1 hover:text-sun2" href="/tai-khoan/ho-tro">Gửi yêu cầu hỗ trợ</Link></div>
             <div><div className="font-bold text-white mb-3">Pháp lý</div>
               <Link className="block py-1 hover:text-sun2" href="/dieu-khoan">Điều khoản</Link>

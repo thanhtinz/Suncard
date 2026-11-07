@@ -12,7 +12,7 @@ body { background: #FFF9F1; color: #14213D; font-family: system-ui, -apple-syste
 .table { @apply w-full text-sm; }
 .table th { @apply text-left font-semibold text-slate-500 px-3 py-2 border-b whitespace-nowrap; }
 .table td { @apply px-3 py-2 border-b border-orange-100; }
-.badge { @apply inline-block rounded-full px-2 py-0.5 text-xs font-medium; }
+.badge { @apply inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
 .text-grad-sun { background: linear-gradient(90deg, #E86A17, #F5A623); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .bg-grad-sun { background: linear-gradient(90deg, #FF8A3D, #FFB03A); }
 .bg-hero-sun { background: linear-gradient(115deg, #FFE3B3 0%, #FFD1DC 55%, #FFF3D6 100%); }

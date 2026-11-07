@@ -163,6 +163,23 @@ model AgentLevel {
   createdAt DateTime @default(now())
   @@map("agent_levels")
 }
+model AgentApplication {
+  id String @id @default(cuid())
+  userId String
+  fullName String
+  phone String
+  email String
+  region String?
+  note String?
+  status String @default("PENDING") // PENDING|APPROVED|REJECTED
+  reviewNote String?
+  reviewedAt DateTime?
+  reviewedBy String?
+  createdAt DateTime @default(now())
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@map("agent_applications")
+}
 model Agent {
   id String @id @default(cuid())
   userId String @unique
@@ -918,6 +935,10 @@ model ApiClient {
   callbackUrl String?
   callbackMethod String @default("POST") // POST|GET — callback chargingws
   feeGroup String @default("API") // MEMBER|AGENT|API — nhóm phí gạch thẻ
+  apiType String @default("FULL") // CHARGING|RECHARGE|SOFTCARD|FULL — loại API đăng ký
+  reviewNote String?
+  reviewedAt DateTime?
+  reviewedBy String?
   createdAt DateTime @default(now())
   @@map("api_clients")
 }
@@ -926,6 +947,7 @@ model ApiKey {
   clientId String
   keyPrefix String
   keyHash String @unique
+  keyEnc String? // api key gốc mã hoá AES-GCM — chủ sở hữu xem lại qua step-up
   secretHash String
   secretEnc String? // secret ký HMAC, mã hoá AES-256-GCM (envelope), chỉ giải mã khi verify
   scopes Json?

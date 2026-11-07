@@ -6,6 +6,7 @@ import {
   buildChargingResponse, chargingMessage, ipAllowed, callbackSign,
 } from "@/modules/charging";
 import { maskSecret } from "@/lib/crypto";
+import { apiTypeAllows } from "@/modules/api-applications";
 import { submitExchange, finalizeExchangeViaProvider } from "@/modules/orders-service";
 
 // Charging Compat API — POST (và GET) /chargingws/v2, command=charging|check.
@@ -46,6 +47,7 @@ async function handle(req: Request) {
     if (command !== "charging" && command !== "check") return errResp(104, requestId);
     const client = await prisma.apiClient.findUnique({ where: { clientId: f.partner_id ?? "" } });
     if (!client || client.status !== "ACTIVE") return errResp(102, requestId);
+    if (!apiTypeAllows(client.apiType ?? "FULL", "CHARGING")) return errResp(102, requestId);
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
     if (!ipAllowed(client, ip)) return errResp(102, requestId);
     const partnerKey = await partnerKeyOf(prisma as unknown as DB, client);

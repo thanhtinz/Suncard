@@ -29,7 +29,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
       label: "Tài khoản",
       items: [
         { href: "/tai-khoan/ho-tro", label: "Hỗ trợ", icon: "headset" },
-        { href: "/tai-khoan/api-keys", label: "API Keys", icon: "key" },
+        { href: "/tai-khoan/api-keys", label: "Kết nối API", icon: "key" },
         { href: "/tai-khoan/mfa", label: "Bảo mật 2 lớp (MFA)", icon: "shield" },
         { href: "/tai-khoan/phien", label: "Phiên đăng nhập", icon: "sessions" },
       ],
