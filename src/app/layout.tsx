@@ -29,8 +29,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="vi">
       <body>
         <header className="sticky top-0 z-40 border-b border-sunline" style={{ background: "rgba(255,249,241,.92)", backdropFilter: "blur(8px)" }}>
-          <div className="mx-auto max-w-7xl px-4 h-16 flex items-center gap-5">
-            <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl text-navy tracking-tight">
+          <div className="mx-auto max-w-7xl px-4 h-16 flex items-center gap-2.5 sm:gap-5">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 font-extrabold text-lg sm:text-xl text-navy tracking-tight">
               <SunMark /> SunCard
             </Link>
             <nav className="hidden md:flex gap-5 text-[15px] font-semibold text-ink2 ml-2">
@@ -38,11 +38,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link key={n.href} href={n.href} className="hover:text-sundeep py-1">{n.label}</Link>
               ))}
             </nav>
-            <details className="md:hidden relative">
+            <div className="ml-auto flex items-center gap-2 sm:gap-2.5 text-sm">
+              {session ? (<>
+                <Link href="/tai-khoan" className="hidden sm:block font-semibold text-navy hover:text-sundeep max-w-[180px] truncate">{session.email}</Link>
+                {isStaff && <Link href="/admin" className="font-semibold text-navy hover:text-sundeep">Admin</Link>}
+                <form action="/api/auth/logout" method="post"><button className="btn-ghost !py-1.5">Đăng xuất</button></form>
+              </>) : (<>
+                <Link href="/dang-nhap" className="btn-ghost !py-2 !px-2.5 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm">Đăng nhập</Link>
+                <Link href="/dang-ky" className="btn-primary !py-2 !px-2.5 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm">Đăng ký</Link>
+              </>)}
+            </div>
+            <details className="md:hidden relative shrink-0">
               <summary className="list-none cursor-pointer p-2 -m-1 text-navy [&::-webkit-details-marker]:hidden" aria-label="Mở menu">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
               </summary>
-              <nav className="absolute left-0 top-10 w-56 bg-white text-navy rounded-2xl shadow-sunsoft border border-sunline p-2 text-sm z-50">
+              <nav className="absolute right-0 top-10 w-56 bg-white text-navy rounded-2xl shadow-sunsoft border border-sunline p-2 text-sm z-50">
                 {NAV.map((n) => (
                   <Link key={n.href} href={n.href} className="block px-3 py-2 rounded-lg hover:bg-orange-50">{n.label}</Link>
                 ))}
@@ -53,16 +63,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </>)}
               </nav>
             </details>
-            <div className="ml-auto flex items-center gap-2.5 text-sm">
-              {session ? (<>
-                <Link href="/tai-khoan" className="hidden sm:block font-semibold text-navy hover:text-sundeep max-w-[180px] truncate">{session.email}</Link>
-                {isStaff && <Link href="/admin" className="font-semibold text-navy hover:text-sundeep">Admin</Link>}
-                <form action="/api/auth/logout" method="post"><button className="btn-ghost !py-1.5">Đăng xuất</button></form>
-              </>) : (<>
-                <Link href="/dang-nhap" className="btn-ghost !py-2 !px-3 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm max-sm:hidden">Đăng nhập</Link>
-                <Link href="/dang-ky" className="btn-primary !py-2 !px-3 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm">Đăng ký</Link>
-              </>)}
-            </div>
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 min-h-[70vh] w-full">{children}</main>
