@@ -8,20 +8,13 @@ export interface NamedOpt { code: string; name: string }
 const fmt = (s: string) => Number(s).toLocaleString("vi-VN") + " ₫";
 
 function Gem({ size = 30 }: { size?: number }) {
-  return (
-    <svg width={size} height={Math.round(size * 26 / 30)} viewBox="0 0 30 26" aria-hidden="true" className="shrink-0">
-      <path d="M15 1 L28 9 L15 25 L2 9 Z" fill="#38BDF8" />
-      <path d="M15 1 L21 9 L15 25 L9 9 Z" fill="#0284C7" />
-      <path d="M2 9 H28" stroke="#BAE6FD" strokeWidth="1.6" />
-      <path d="M9 9 L15 1 L21 9" fill="none" stroke="#E0F2FE" strokeWidth="1.4" />
-    </svg>
-  );
+  return <i className="fa-solid fa-gem text-sky-500 shrink-0" style={{ fontSize: size }} aria-hidden="true" />;
 }
 
 function Tick() {
   return (
     <span className="absolute -top-2 -right-1.5 w-6 h-6 rounded-full bg-grad-sun flex items-center justify-center shadow-sun z-10">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12.5l5 5L20 6.5" /></svg>
+      <i className="fa-solid fa-check text-[11px] text-white" aria-hidden="true" />
     </span>
   );
 }
@@ -94,16 +87,16 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
           <div className="flex gap-2 flex-wrap mt-2.5">
             {currencyName && (
               <Badge>
-                <svg width="13" height="13" viewBox="0 0 30 26" aria-hidden="true"><path d="M15 1 L28 9 L15 25 L2 9 Z" fill="#38BDF8" /><path d="M15 1 L21 9 L15 25 L9 9 Z" fill="#0284C7" /></svg>
+                <i className="fa-solid fa-gem text-[12px] text-sky-500" aria-hidden="true" />
                 Nạp {currencyName}
               </Badge>
             )}
             <Badge>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#E86A17" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" /></svg>
+              <i className="fa-solid fa-bolt text-[12px]" aria-hidden="true" />
               Tự động 24/7
             </Badge>
             <Badge>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+              <i className="fa-solid fa-check text-[12px]" aria-hidden="true" />
               Nhận ngay
             </Badge>
           </div>
@@ -117,12 +110,12 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
       {/* Dải cam trên cùng của thẻ chi tiết */}
       <div className="flex items-center gap-3.5 px-4 py-[13px] sm:px-6 sm:py-[15px]" style={{ background: "linear-gradient(90deg,#FF7A1A,#FF9E3D)" }}>
         <Link href="/nap-game" aria-label="Quay lại danh sách game" className="w-[38px] h-[38px] rounded-full bg-white flex items-center justify-center flex-none shadow-[0_4px_12px_rgba(180,60,0,.25)] hover:bg-orange-50 transition">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+          <i className="fa-solid fa-chevron-left text-[16px] text-sundeep" aria-hidden="true" />
         </Link>
         <h1 className="text-white font-extrabold text-lg sm:text-xl tracking-tight">Nạp game</h1>
         <div className="ml-auto flex items-center gap-2 text-white font-extrabold text-[17px]">
           <span className="w-[27px] h-[27px] rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="#fff" /><g stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" /></g></svg>
+            <i className="fa-solid fa-sun text-[14px]" aria-hidden="true" />
           </span>
           <span className="hidden sm:inline">SunCard</span>
         </div>
@@ -142,7 +135,7 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
                 <div className="flex-1 min-w-0">
                   <label className="block text-[13.5px] font-bold text-navy mb-[7px]">UID / ID game <span className="text-[#E30613]">*</span></label>
                   <div className="flex items-center gap-2 border-2 border-sunline rounded-[13px] px-3.5 bg-[#FFFDF9] h-12">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA5BC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="8" r="3.6" /><path d="M5 20c.8-3.6 3.6-5.4 7-5.4s6.2 1.8 7 5.4" /></svg>
+                    <i className="fa-solid fa-user text-[15px] text-[#9AA5BC] shrink-0" aria-hidden="true" />
                     <input value={playerId} onChange={(e) => { setPlayerId(e.target.value); setNickname(null); }} required placeholder="Nhập UID tài khoản game" aria-label="UID game" className="border-0 outline-none bg-transparent text-[15px] font-semibold text-navy w-full min-w-0 placeholder:text-[#9AA5BC] placeholder:font-normal" />
                   </div>
                 </div>
@@ -160,7 +153,7 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
                   <div className="flex-1 min-w-0">
                     <label className="block text-[13.5px] font-bold text-navy mb-[7px]">Máy chủ <span className="text-[#E30613]">*</span></label>
                     <div className="flex items-center gap-2 border-2 border-sunline rounded-[13px] px-3.5 bg-[#FFFDF9] h-12">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA5BC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="5" width="18" height="6" rx="2" /><rect x="3" y="13" width="18" height="6" rx="2" /><path d="M7 8h.01M7 16h.01" /></svg>
+                      <i className="fa-solid fa-server text-[15px] text-[#9AA5BC] shrink-0" aria-hidden="true" />
                       <select value={serverCode} onChange={(e) => { setServerCode(e.target.value); setNickname(null); }} aria-label="Máy chủ" className="border-0 outline-none bg-transparent text-[15px] font-semibold text-navy w-full min-w-0">
                         {servers.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                       </select>
@@ -168,7 +161,7 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
                   </div>
                 )}
                 <button type="button" disabled={busy || !playerId} onClick={validate} className="h-12 px-[22px] rounded-[13px] border-2 border-sun1 bg-[#FFF7EC] text-sundeep font-extrabold text-[15px] inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 hover:bg-orange-100 transition">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.8-3.8" /></svg>
+                  <i className="fa-solid fa-magnifying-glass text-[15px]" aria-hidden="true" />
                   Kiểm tra
                 </button>
               </div>
@@ -177,7 +170,7 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
                 <div className="mt-3.5 bg-[#FFF6E8] border border-[#F7E3C2] rounded-[14px] px-4 py-3 flex items-center gap-3.5 flex-wrap">
                   <span className="flex items-center gap-2 font-bold text-[#1d6b34] text-sm">
                     <span className="w-6 h-6 rounded-full bg-[#22C55E] flex items-center justify-center flex-none">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      <i className="fa-solid fa-check text-[11px] text-white" aria-hidden="true" />
                     </span>
                     Thông tin người chơi
                   </span>
@@ -251,7 +244,7 @@ export default function TopupForm({ slug, gameName, publisher, currencyName, var
                 {showUsd && usdRate && selected ? <span className="block text-xs text-muted2">{usd(selected.price)}</span> : null}
               </div>
               <button type="submit" disabled={busy || !playerId} className="btn-primary rounded-2xl px-6 py-3.5 sm:px-9 sm:py-[15px] text-[16px] sm:text-[17px] font-extrabold flex-1 sm:flex-none disabled:opacity-50">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" /></svg>
+                <i className="fa-solid fa-bolt text-[16px]" aria-hidden="true" />
                 Nạp ngay
               </button>
             </div>

@@ -21,7 +21,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
       items: [
         { href: "/tai-khoan", label: "Tổng quan", icon: "grid" },
         { href: "/tai-khoan/don-hang", label: "Đơn hàng", icon: "receipt" },
-        { href: "/tra-cuu", label: "Lịch sử đổi thẻ", icon: "clock" },
+        { href: "/tai-khoan/lich-su-doi-the", label: "Lịch sử đổi thẻ", icon: "clock" },
         { href: "/tai-khoan/the-da-mua", label: "Thẻ đã mua", icon: "card" },
       ],
     },
@@ -57,7 +57,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
         <span className="block text-xs font-semibold text-[#A08B62] mt-0.5">Số dư ví: <b className="text-sundeep">{balance}</b></span>
       </span>
       <Link href="/tai-khoan/vi" aria-label="Nạp tiền vào ví" className="ml-auto w-[34px] h-[34px] rounded-full bg-grad-sun text-white flex items-center justify-center shadow-sun shrink-0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        <i className="fa-solid fa-plus text-[15px]" aria-hidden="true" />
       </Link>
     </div>
   );

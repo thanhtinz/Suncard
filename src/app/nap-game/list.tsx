@@ -11,32 +11,18 @@ export interface GameItem {
 }
 
 function SunMark({ size = 17 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="5" fill="#fff" />
-      <g stroke="#fff" strokeWidth="2" strokeLinecap="round">
-        <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
-      </g>
-    </svg>
-  );
+  return <i className="fa-solid fa-sun text-white" style={{ fontSize: size }} aria-hidden="true" />;
 }
 
+const GENRE_FA: Record<string, string> = {
+  "MOBA": "fa-bullseye",
+  "Battle Royale": "fa-crosshairs",
+  "RPG": "fa-star",
+  "Khác": "fa-table-cells-large",
+};
+
 function GenreIcon({ genre, on }: { genre: string; on: boolean }) {
-  const stroke = on ? "#fff" : "#E86A17";
-  const fill = on ? "#fff" : "#E86A17";
-  const common = { width: 15, height: 15, viewBox: "0 0 24 24", "aria-hidden": true } as const;
-  switch (genre) {
-    case "MOBA":
-      return (<svg {...common} fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="3.5" /></svg>);
-    case "Battle Royale":
-      return (<svg {...common} fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="3.2" /></svg>);
-    case "RPG":
-      return (<svg {...common} fill={fill}><path d="M12 3.5l2.5 5.2 5.7.7-4.2 3.9 1.1 5.7L12 16.2 6.9 19l1.1-5.7L3.8 9.4l5.7-.7L12 3.5z" /></svg>);
-    case "Khác":
-      return (<svg {...common} fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" /></svg>);
-    default:
-      return (<svg {...common} fill={fill}><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" /></svg>);
-  }
+  return <i className={`fa-solid ${GENRE_FA[genre] ?? "fa-bolt"} text-[13px] ${on ? "text-white" : "text-sundeep"}`} aria-hidden="true" />;
 }
 
 export default function GameList({ games }: { games: GameItem[] }) {
@@ -84,14 +70,14 @@ export default function GameList({ games }: { games: GameItem[] }) {
       <div className="relative bg-white border border-sunline rounded-[28px] shadow-soft px-4 py-5 sm:px-6 lg:px-[30px] lg:py-[26px] -mt-6 lg:-mt-[34px]">
         <div className="flex flex-wrap gap-3">
           <div className="flex-1 min-w-[220px] flex items-center gap-2.5 border-2 border-sunline rounded-[13px] px-4 bg-[#FFFDF9] h-[50px]">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9AA5BC" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.8-3.8" /></svg>
+            <i className="fa-solid fa-magnifying-glass text-[16px] text-[#9AA5BC] shrink-0" aria-hidden="true" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm game (VD: Liên Quân, Free Fire, Genshin...)" aria-label="Tìm game" className="border-0 outline-none bg-transparent text-[15px] text-navy w-full min-w-0 placeholder:text-[#9AA5BC]" />
             {q && (
-              <button type="button" onClick={() => setQ("")} aria-label="Xoá tìm kiếm" className="shrink-0 text-[#9AA5BC] hover:text-navy font-bold text-lg leading-none">×</button>
+              <button type="button" onClick={() => setQ("")} aria-label="Xoá tìm kiếm" className="shrink-0 text-[#9AA5BC] hover:text-navy leading-none"><i className="fa-solid fa-xmark text-[16px]" aria-hidden="true" /></button>
             )}
           </div>
           <button type="button" onClick={resetAll} className="inline-flex items-center justify-center gap-2 h-[50px] px-[18px] border-2 border-sunline rounded-[13px] bg-white text-sm font-bold text-navy hover:bg-orange-50 transition flex-1 sm:flex-none">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" /></svg>
+            <i className="fa-solid fa-table-cells-large text-[15px] text-sundeep" aria-hidden="true" />
             Tất cả game
             <span className="text-xs font-semibold text-muted2">({games.length})</span>
           </button>

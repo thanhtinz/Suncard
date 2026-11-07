@@ -10,6 +10,8 @@ export const metadata = { title: "SunCard — Đổi thẻ cào, nạp game, mua
 const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT"];
 const ROLE_LINE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", OPS: "Vận hành", FINANCE: "Tài chính", SUPPORT: "Hỗ trợ", PRODUCT_MANAGER: "Sản phẩm", PROVIDER_MANAGER: "Nhà cung cấp", RISK: "Rủi ro", AUDITOR: "Kiểm toán" };
 
+const FA_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css";
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Khu quản trị /admin dùng khung admin theme riêng (header/menu/footer riêng trong
   // admin/layout.tsx) — không bọc header/footer của web bán hàng.
@@ -17,6 +19,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (pathname.startsWith("/admin")) {
     return (
       <html lang="vi">
+        <head>
+          <link rel="stylesheet" href={FA_CSS} />
+        </head>
         <body className="bg-[#F7F2E7]">{children}</body>
       </html>
     );
@@ -45,6 +50,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   return (
     <html lang="vi">
+      <head>
+        <link rel="stylesheet" href={FA_CSS} />
+      </head>
       <body>
         <SiteHeader user={headerUser} />
         <main className="mx-auto max-w-7xl px-4 py-6 min-h-[70vh] w-full">{children}</main>
@@ -61,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link className="block py-1 hover:text-sun2" href="/dai-ly">Đại lý & API</Link></div>
             <div><div className="font-bold text-white mb-3">Hỗ trợ</div>
               <Link className="block py-1 hover:text-sun2" href="/tro-giup">Trung tâm hỗ trợ</Link>
-              <Link className="block py-1 hover:text-sun2" href="/tai-lieu">Tài liệu</Link>
+              <Link className="block py-1 hover:text-sun2" href="/tai-lieu/api">Tài liệu</Link>
               <Link className="block py-1 hover:text-sun2" href="/bai-viet">Bài viết & hướng dẫn</Link>
               <Link className="block py-1 hover:text-sun2" href="/tai-khoan/ho-tro">Gửi yêu cầu hỗ trợ</Link></div>
             <div><div className="font-bold text-white mb-3">Pháp lý</div>

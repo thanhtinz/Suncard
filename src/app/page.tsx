@@ -6,9 +6,9 @@ import FeeTable, { type FeeRow } from "@/components/FeeTable";
 export const dynamic = "force-dynamic";
 
 const TRUST = [
-  { label: "Xử lý ~30 giây", icon: <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" /> },
-  { label: "Mã thẻ mã hoá an toàn", icon: <><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" /></> },
-  { label: "9 nhà mạng & thẻ game", icon: <path d="M4 7h16M4 12h16M4 17h10" /> },
+  { label: "Xử lý ~30 giây", icon: "fa-bolt" },
+  { label: "Mã thẻ mã hoá an toàn", icon: "fa-shield-halved" },
+  { label: "9 nhà mạng & thẻ game", icon: "fa-layer-group" },
 ];
 
 export default async function HomePage() {
@@ -41,7 +41,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap gap-x-6 gap-y-2.5 mt-6">
               {TRUST.map((t) => (
                 <span key={t.label} className="flex items-center gap-2 text-sm font-semibold text-navy">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{t.icon}</svg>
+                  <i className={`fa-solid ${t.icon} text-[17px] text-sundeep`} aria-hidden="true" />
                   {t.label}
                 </span>
               ))}

@@ -54,7 +54,7 @@ export default function ExchangeForm({ loggedIn, memberFees }: { loggedIn: boole
   return (
     <form onSubmit={submit} className="bg-white rounded-[26px] p-6 md:p-7 shadow-sunsoft border border-white w-full">
       <h2 className="text-xl font-bold text-navy flex items-center gap-2.5">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E86A17" strokeWidth="2" strokeLinecap="round"><rect x="3" y="6" width="18" height="13" rx="3" /><path d="M3 10.5h18M7 15.5h4" /></svg>
+        <i className="fa-solid fa-credit-card text-[20px] text-sundeep" aria-hidden="true" />
         Đổi thẻ cào
       </h2>
       <p className="text-[13.5px] text-muted2 mt-1 mb-2">Điền thông tin thẻ — hệ thống kiểm tra & cộng ví tự động.</p>

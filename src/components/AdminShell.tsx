@@ -98,7 +98,7 @@ export default function AdminShell({ user, groups, children }: { user: AdminShel
           <button aria-label="Đóng menu" className="absolute inset-0 bg-navy/50" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-[280px] bg-navy shadow-2xl">
             <button aria-label="Đóng menu" onClick={() => setOpen(false)} className="absolute right-3 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              <i className="fa-solid fa-xmark text-[15px]" aria-hidden="true" />
             </button>
             <SidebarBody user={user} groups={groups} pathname={pathname} onNavigate={() => setOpen(false)} />
           </div>
@@ -110,7 +110,7 @@ export default function AdminShell({ user, groups, children }: { user: AdminShel
         <header className="sticky top-0 z-30 border-b border-[#EFE3CB] bg-[#FFF9F1]/92 backdrop-blur">
           <div className="mx-auto flex w-full max-w-[1440px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <button className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#F0E2C4] bg-white text-navy lg:hidden" aria-label="Mở menu quản trị" onClick={() => setOpen(true)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+              <i className="fa-solid fa-bars text-[17px]" aria-hidden="true" />
             </button>
             <span className="flex items-center gap-2.5 lg:hidden">
               <SunMark size={30} />

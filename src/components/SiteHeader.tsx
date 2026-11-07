@@ -37,8 +37,8 @@ function relTime(iso: string): string {
 
 export function SunMark({ size = 34 }: { size?: number }) {
   return (
-    <span className="inline-flex items-center justify-center rounded-full bg-grad-sun shadow-sun shrink-0" style={{ width: size, height: size }}>
-      <svg width={size * 0.58} height={size * 0.58} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#fff" /><g stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" /></g></svg>
+    <span className="inline-flex items-center justify-center rounded-full bg-grad-sun shadow-sun shrink-0 text-white" style={{ width: size, height: size }}>
+      <i className="fa-solid fa-sun" style={{ fontSize: size * 0.58 }} aria-hidden="true" />
     </span>
   );
 }
@@ -48,7 +48,7 @@ const NAV = [
   { href: "/nap-game", label: "Nạp game", icon: "gamepad" },
   { href: "/cua-hang-the", label: "Mua thẻ", icon: "card" },
   { href: "/dai-ly", label: "Đại lý", icon: "store" },
-  { href: "/tai-lieu", label: "Tài liệu", icon: "file" },
+  { href: "/tai-lieu/api", label: "Tài liệu", icon: "file" },
   { href: "/bai-viet", label: "Bài viết", icon: "book" },
   { href: "/tro-giup", label: "Hỗ trợ", icon: "headset" },
 ];
@@ -61,7 +61,7 @@ const TILES = [
 
 const ROWS = [
   { href: "/dai-ly", label: "Đại lý & đối tác", desc: "Chính sách hoa hồng, đăng ký mở đại lý", icon: "store" },
-  { href: "/tai-lieu", label: "Tài liệu", desc: "Tài liệu API & tài liệu cho đại lý, đối tác", icon: "file" },
+  { href: "/tai-lieu/api", label: "Tài liệu", desc: "Tài liệu API & tài liệu cho đại lý, đối tác", icon: "file" },
   { href: "/bai-viet", label: "Bài viết & hướng dẫn", desc: "Hướng dẫn sử dụng, thông báo & kiến thức", icon: "book" },
   { href: "/tro-giup", label: "Trung tâm hỗ trợ", desc: "Giải đáp & gửi yêu cầu 24/7", icon: "headset" },
 ];
@@ -93,8 +93,8 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
     <header className="sticky top-0 z-40 border-b border-[#F1DFC0] shadow-[0_6px_22px_rgba(232,106,23,0.08)]" style={{ background: "linear-gradient(180deg, rgba(255,252,246,.97), rgba(255,244,224,.97))", backdropFilter: "blur(8px)" }}>
       <div className="mx-auto max-w-7xl px-4 h-16 xl:h-[78px] flex items-center gap-2.5 sm:gap-4 relative">
         <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0" aria-label="SunCard — trang chủ">
-          <span className="w-9 h-9 xl:w-[44px] xl:h-[44px] rounded-xl xl:rounded-[14px] bg-grad-sun shadow-sun flex items-center justify-center">
-            <svg className="w-5 h-5 xl:w-[26px] xl:h-[26px]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#fff" /><g stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" /></g></svg>
+          <span className="w-9 h-9 xl:w-[44px] xl:h-[44px] rounded-xl xl:rounded-[14px] bg-grad-sun shadow-sun flex items-center justify-center text-white">
+            <i className="fa-solid fa-sun text-[20px] xl:text-[26px]" aria-hidden="true" />
           </span>
           <span className="text-lg sm:text-xl xl:text-[23px] font-extrabold tracking-tight text-navy">Sun<span className="text-grad-sun">Card</span></span>
         </Link>
@@ -121,7 +121,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                 <span className="block text-sm font-extrabold text-navy whitespace-nowrap">{user.balance}</span>
               </span>
               <Link href="/tai-khoan/vi" aria-label="Nạp tiền vào ví" className="w-[30px] h-[30px] rounded-full bg-grad-sun text-white flex items-center justify-center shadow-sun">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                <i className="fa-solid fa-plus text-[14px]" aria-hidden="true" />
               </Link>
             </span>
             )}
@@ -141,7 +141,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
             </Link>
             <form action="/api/auth/logout" method="post" className="hidden md:block">
               <button className="btn-ghost !py-1.5 !px-3 text-[13px] whitespace-nowrap" aria-label="Đăng xuất" title="Đăng xuất">
-                <svg className="min-[1560px]:hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3M16 17l5-5-5-5M21 12H9" /></svg>
+                <i className="fa-solid fa-right-from-bracket min-[1560px]:hidden text-[15px]" aria-hidden="true" />
                 <span className="hidden min-[1560px]:inline">Đăng xuất</span>
               </button>
             </form>
@@ -152,14 +152,14 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
             </Link>
             <Link href="/dang-ky" className="flex items-center gap-1.5 bg-grad-sun rounded-full px-3 sm:px-[18px] py-2 sm:py-2.5 text-[13px] sm:text-sm font-extrabold text-white whitespace-nowrap shadow-sun">
               Đăng ký
-              <svg className="hidden sm:block" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              <i className="fa-solid fa-arrow-right hidden sm:block text-[14px]" aria-hidden="true" />
             </Link>
           </>)}
           <button type="button" onClick={() => { setBellOpen(false); setOpen((v) => !v); }} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}
             className={`min-[1400px]:hidden w-[39px] h-[39px] rounded-xl border-[1.5px] flex items-center justify-center shrink-0 ${open ? "bg-navy border-navy text-white" : "bg-white border-[#F1E0C2] text-navy"}`}>
             {open
-              ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-              : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h10" /></svg>}
+              ? <i className="fa-solid fa-xmark text-[17px]" aria-hidden="true" />
+              : <i className="fa-solid fa-bars text-[18px]" aria-hidden="true" />}
           </button>
         </div>
 
@@ -174,7 +174,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                     <span className="block text-xs font-semibold text-[#A08B62] mt-0.5">Số dư ví: <b className="text-sundeep">{user.balance}</b></span>
                   </span>
                   <Link href="/tai-khoan/vi" aria-label="Nạp tiền vào ví" className="ml-auto w-[34px] h-[34px] rounded-full bg-grad-sun text-white flex items-center justify-center shadow-sun shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                    <i className="fa-solid fa-plus text-[15px]" aria-hidden="true" />
                   </Link>
                 </div>
               )}
@@ -200,14 +200,14 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                       <span className="block text-sm font-bold text-navy">{r.label}</span>
                       <span className="block text-xs font-medium text-[#A08B62] mt-0.5">{r.desc}</span>
                     </span>
-                    <svg className="ml-auto shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9B48A" strokeWidth="2.4" strokeLinecap="round"><path d="M9 6l6 6-6 6" /></svg>
+                    <i className="fa-solid fa-chevron-right ml-auto shrink-0 text-[13px] text-[#C9B48A]" aria-hidden="true" />
                   </Link>
                 ))}
                 {user && (<>
                   <form action="/api/auth/logout" method="post" className="border-t border-[#F7EDD8]">
                     <button className="flex w-full items-center gap-3 py-3 text-left">
                       <span className="w-[34px] h-[34px] rounded-[11px] bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3M16 17l5-5-5-5M21 12H9" /></svg>
+                        <i className="fa-solid fa-right-from-bracket text-[16px]" aria-hidden="true" />
                       </span>
                       <span className="text-sm font-bold text-red-500">Đăng xuất</span>
                     </button>

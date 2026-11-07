@@ -28,7 +28,7 @@ function Wordmark({ wm, size = "lg" }: { wm: string; size?: "lg" | "sm" }) {
 function Tick() {
   return (
     <span className="absolute -top-2 -right-1.5 w-[23px] h-[23px] rounded-full bg-grad-sun flex items-center justify-center shadow-sun z-10">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12.5l5 5L20 6.5" /></svg>
+      <i className="fa-solid fa-check text-[11px] text-white" aria-hidden="true" />
     </span>
   );
 }
@@ -184,7 +184,7 @@ export default function CardShop({ products, loggedIn, fxEnabled, showUsd, vndPe
           )}
           <button type="button" onClick={buy} disabled={busy || variant.stock === 0}
             className="btn-primary w-full !py-4 !text-lg !rounded-2xl flex items-center justify-center gap-2.5 disabled:opacity-50">
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="13" rx="3" /><path d="M3 10.5h18" /></svg>
+            <i className="fa-solid fa-credit-card text-[19px] text-white" aria-hidden="true" />
             {busy ? "Đang xử lý…" : variant.stock === 0 ? "Mệnh giá này tạm hết hàng" : "Mua thẻ ngay"}
           </button>
         </div>
