@@ -10,12 +10,13 @@ export default async function AccountDashboard() {
   const session = await getSession().catch(() => null);
   if (!session) redirect("/dang-nhap");
   const uid = session.userId;
-  const [avail, held, orders, notifs, profile] = await Promise.all([
+  const [avail, held, orders, notifs, profile, orderCount] = await Promise.all([
     prisma.ledgerAccount.findUnique({ where: { code: `WALLET:${uid}:AVAILABLE` } }),
     prisma.ledgerAccount.findUnique({ where: { code: `WALLET:${uid}:HELD` } }),
     prisma.order.findMany({ where: { userId: uid }, orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.notification.findMany({ where: { userId: uid, readAt: null }, orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.userProfile.findUnique({ where: { userId: uid } }),
+    prisma.order.count({ where: { userId: uid } }),
   ]);
   return (
     <div>
@@ -23,7 +24,7 @@ export default async function AccountDashboard() {
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div className="card p-5"><div className="text-sm text-slate-500">Số dư khả dụng</div><div className="text-2xl mt-1 text-primary"><Money v={avail?.balanceMinor ?? BigInt(0)} /></div></div>
         <div className="card p-5"><div className="text-sm text-slate-500">Đang giữ (chờ xử lý)</div><div className="text-2xl mt-1"><Money v={held?.balanceMinor ?? BigInt(0)} /></div></div>
-        <div className="card p-5"><div className="text-sm text-slate-500">Thông báo chưa đọc</div><div className="text-2xl mt-1">{notifs.length}</div></div>
+        <div className="card p-5"><div className="text-sm text-slate-500">Tổng số đơn hàng</div><div className="text-2xl mt-1">{orderCount}</div></div>
       </div>
       <h2 className="font-bold text-navy mb-3">Đơn gần đây</h2>
       {orders.length === 0 ? <Empty text="Bạn chưa có đơn hàng nào" /> : (

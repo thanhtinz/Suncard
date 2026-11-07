@@ -23,6 +23,10 @@ export default function ApiDocsPage() {
           <h3 className="font-bold text-navy mb-1">Đặc tả OpenAPI</h3>
           <p>Tải file đặc tả đầy đủ: <a className="text-primary underline" href="/openapi.yaml">/openapi.yaml</a></p>
         </div>
+        <div>
+          <h3 className="font-bold text-navy mb-1">Charging Compat API (chuẩn chung các web gạch thẻ)</h3>
+          <p>SunCard hỗ trợ thêm giao thức gạch thẻ phổ biến để đối tác đang dùng web khác chuyển sang không phải sửa code: <code>POST /chargingws/v2</code> với <code>command=charging</code> (gạch thẻ) hoặc <code>check</code> (kiểm tra), và <code>GET /chargingws/v2/getfee</code> để lấy bảng phí. Chữ ký <code>sign = md5(partner_key + code + serial)</code> hoặc bản mở rộng kèm command, partner_id, request_id, telco. Mã trạng thái: 99 đang xử lý, 1 đúng mệnh giá, 2 sai mệnh giá (trả theo mệnh giá thực, trừ phí phạt), 3 thẻ sai/đã dùng, 4 bảo trì. Kết quả về qua callback với <code>callback_sign = md5(partner_key + code + serial)</code>.</p>
+        </div>
       </div>
       <Link href="/tai-lieu" className="text-sm text-primary">Quay lại danh sách tài liệu</Link>
     </div>

@@ -307,7 +307,6 @@ async function main() {
   const docs: { slug: string; title: string; audience: string; content: string }[] = [
     { slug: "huong-dan-nap-game", title: "Hướng dẫn nạp game", audience: "PUBLIC", content: "Chọn game, nhập UID, hệ thống kiểm tra nickname, chọn gói và thanh toán bằng ví SunCard. Đơn ở trạng thái Đang xác minh (UNKNOWN) sẽ được đối soát tự động — không bị trừ tiền hai lần." },
     { slug: "huong-dan-gach-the", title: "Hướng dẫn gạch thẻ & bảng phí", audience: "PUBLIC", content: "Phí gạch thẻ theo nhà mạng/mệnh giá/nhóm người dùng được công bố ở trang Gạch thẻ và API getfee. Khai sai mệnh giá: thẻ được tính theo mệnh giá thật và bị trừ phạt 50% mệnh giá nhỏ hơn (cấu hình được ở Admin)." },
-    { slug: "tai-lieu-partner-api", title: "Tài liệu Partner API (HMAC) & Charging Compat", audience: "PARTNER", content: "Partner API /v1 dùng API key + HMAC-SHA256. Charging Compat API: POST /chargingws/v2 (charging/check), GET /chargingws/v2/getfee — xem docs/openapi.yaml và docs/research/card-exchange-sites.md." },
     { slug: "handbook-dai-ly", title: "Sổ tay đại lý", audience: "AGENT", content: "Đại lý có giá theo cấp, hoa hồng theo margin (bị cap theo chính sách), công nợ theo hạn mức cấp. Mạng lưới 1 parent trực tiếp, không giới hạn tầng." },
   ];
   for (const d of docs) {
