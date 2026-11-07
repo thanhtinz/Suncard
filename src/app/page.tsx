@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { StatusBadge, Money } from "@/components/ui";
 import { getSession } from "@/modules/security";
 import ExchangeForm, { type MemberFees } from "@/components/ExchangeForm";
 import FeeTable, { type FeeRow } from "@/components/FeeTable";
@@ -12,7 +12,7 @@ const TRUST = [
   { label: "9 nhà mạng & thẻ game", icon: <path d="M4 7h16M4 12h16M4 17h10" /> },
 ];
 
-export default async function HomePage({ searchParams }: { searchParams?: { code?: string } }) {
+export default async function HomePage() {
   const session = await getSession().catch(() => null);
   const feeRules = await prisma.exchangeFeeRule.findMany({
     where: { isActive: true },
@@ -25,25 +25,6 @@ export default async function HomePage({ searchParams }: { searchParams?: { code
   for (const r of feeRules) {
     if (r.groupCode !== "MEMBER") continue;
     (memberFees[r.telco] ??= {})[String(Number(r.faceValueMinor))] = r.feeBps;
-  }
-
-  let lookup: React.ReactNode = null;
-  if (searchParams?.code) {
-    const order = await prisma.order.findUnique({ where: { code: searchParams.code } });
-    if (!order || order.type !== "EXCHANGE")
-      lookup = <div className="rounded-xl bg-amber-50 text-amber-700 px-3 py-2 text-sm">Không tìm thấy đơn gạch thẻ với mã này.</div>;
-    else {
-      const ex = await prisma.exchangeOrder.findUnique({ where: { orderId: order.id } });
-      lookup = (
-        <div className="rounded-xl bg-orange-50/70 px-4 py-3 text-sm space-y-1 w-full">
-          <div className="flex justify-between"><span>Mã đơn</span><b>{order.code}</b></div>
-          <div className="flex justify-between"><span>Trạng thái</span><StatusBadge status={order.status} /></div>
-          {ex && <div className="flex justify-between"><span>Nhà mạng</span><span>{ex.carrier}</span></div>}
-          {ex && <div className="flex justify-between"><span>Mệnh giá</span><Money v={ex.faceValueMinor} /></div>}
-          {ex?.payoutMinor != null && <div className="flex justify-between"><span>Thực nhận</span><Money v={ex.payoutMinor} /></div>}
-        </div>
-      );
-    }
   }
 
   return (
@@ -84,14 +65,10 @@ export default async function HomePage({ searchParams }: { searchParams?: { code
             <ExchangeForm loggedIn={!!session} memberFees={memberFees} />
           </div>
           <div className="order-3 lg:col-start-1 lg:row-start-2">
-            <div className="bg-white rounded-[22px] p-5 shadow-soft border border-white max-w-[520px] lg:max-w-none">
-              <div className="font-bold text-navy text-[15px] mb-3">Tra cứu đơn đổi thẻ</div>
-              <form method="get" className="flex gap-2">
-                <input name="code" className="input flex-1 !py-2.5" defaultValue={searchParams?.code ?? ""} placeholder="Nhập mã đơn, ví dụ SC-8F42KQ" aria-label="Mã đơn gạch thẻ" />
-                <button className="btn-primary shrink-0 !px-5">Tra cứu</button>
-              </form>
-              {lookup && <div className="mt-3">{lookup}</div>}
-            </div>
+            <Link href="/tra-cuu" className="flex items-center justify-between gap-3 bg-white/80 hover:bg-white transition rounded-2xl px-5 py-4 shadow-soft border border-white max-w-[520px] lg:max-w-none">
+              <span className="text-sm"><b className="text-navy">Đã có mã đơn?</b> <span className="text-muted2">Tra cứu trạng thái & xem lịch sử đổi thẻ</span></span>
+              <span className="font-bold text-sundeep text-sm shrink-0">Tra cứu →</span>
+            </Link>
           </div>
         </div>
       </section>

@@ -14,6 +14,7 @@ function SunMark({ size = 34 }: { size?: number }) {
 
 const NAV = [
   { href: "/", label: "Đổi thẻ" },
+  { href: "/tra-cuu", label: "Tra cứu" },
   { href: "/nap-game", label: "Nạp game" },
   { href: "/cua-hang-the", label: "Mua thẻ" },
   { href: "/dai-ly", label: "Đại lý" },
@@ -73,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
             <div><div className="font-bold text-white mb-3">Dịch vụ</div>
               <Link className="block py-1 hover:text-sun2" href="/">Đổi thẻ cào</Link>
+              <Link className="block py-1 hover:text-sun2" href="/tra-cuu">Tra cứu đơn</Link>
               <Link className="block py-1 hover:text-sun2" href="/nap-game">Nạp game</Link>
               <Link className="block py-1 hover:text-sun2" href="/cua-hang-the">Mua thẻ</Link>
               <Link className="block py-1 hover:text-sun2" href="/dai-ly">Đại lý & API</Link></div>
