@@ -1,15 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background: #F5F7FB; color: #14213D; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.card { @apply bg-white rounded-xl shadow-soft border border-slate-100; }
-.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition; }
-.btn-primary { @apply btn bg-primary text-white hover:bg-blue-700; }
-.btn-ghost { @apply btn border border-slate-300 bg-white hover:bg-slate-50; }
+body { background: #FFF9F1; color: #14213D; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.card { @apply bg-white rounded-2xl shadow-soft border border-sunline; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition; }
+.btn-primary { @apply btn text-white hover:brightness-105; background: linear-gradient(90deg, #FF8A3D, #FFB03A); box-shadow: 0 6px 18px rgba(255,138,61,.35); }
+.btn-ghost { @apply btn border-2 bg-white hover:bg-orange-50; border-color: #F0D9BE; color: #14213D; }
 .btn-danger { @apply btn bg-danger text-white hover:bg-red-700; }
-.input { @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-blue-100; }
-.label { @apply block text-sm font-medium mb-1; }
+.input { @apply w-full rounded-xl border-2 px-3 py-2 text-sm outline-none focus:border-sun2 bg-white; border-color: #EFE3D2; }
+.label { @apply block text-sm font-semibold mb-1 text-navy; }
 .table { @apply w-full text-sm; }
 .table th { @apply text-left font-semibold text-slate-500 px-3 py-2 border-b; }
-.table td { @apply px-3 py-2 border-b border-slate-100; }
+.table td { @apply px-3 py-2 border-b border-orange-100; }
 .badge { @apply inline-block rounded-full px-2 py-0.5 text-xs font-medium; }
+.text-grad-sun { background: linear-gradient(90deg, #E86A17, #F5A623); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bg-grad-sun { background: linear-gradient(90deg, #FF8A3D, #FFB03A); }
+.bg-hero-sun { background: linear-gradient(115deg, #FFE3B3 0%, #FFD1DC 55%, #FFF3D6 100%); }

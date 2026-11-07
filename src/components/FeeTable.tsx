@@ -37,11 +37,11 @@ export default function FeeTable({ rows }: { rows: FeeRow[] }) {
 
   if (rows.length === 0) return <div className="card p-5 text-sm text-slate-500">Bảng phí đang được cập nhật.</div>;
   return (
-    <div className="card overflow-hidden">
-      <div className="flex flex-wrap gap-1 p-2 bg-slate-50 border-b" role="tablist" aria-label="Loại thẻ">
+    <div className="card overflow-hidden !rounded-[22px]">
+      <div className="flex flex-wrap gap-1.5 p-3 pb-1" role="tablist" aria-label="Loại thẻ">
         {telcos.map((t) => (
           <button key={t} role="tab" aria-selected={t === telco} onClick={() => setTelco(t)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${t === telco ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            className={`px-4 py-2 rounded-full text-sm font-bold ${t === telco ? "bg-navy text-white" : "text-muted2 hover:bg-orange-50"}`}>
             {TELCO_NAMES[t] ?? t}
           </button>
         ))}
@@ -49,22 +49,22 @@ export default function FeeTable({ rows }: { rows: FeeRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b">
-              <th className="px-4 py-2.5 font-medium">Mệnh giá</th>
-              {GROUPS.map((g) => <th key={g.key} className="px-4 py-2.5 font-medium">{g.name}</th>)}
-              <th className="px-4 py-2.5 font-medium">Thực nhận (Thành viên)</th>
+            <tr className="text-left text-muted2 border-b border-sunline">
+              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Mệnh giá</th>
+              {GROUPS.map((g) => <th key={g.key} className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">{g.name}</th>)}
+              <th className="px-5 py-3 font-semibold text-xs uppercase tracking-wide">Thực nhận (Thành viên)</th>
             </tr>
           </thead>
           <tbody>
             {faces.map(([face, byGroup]) => {
               const member = byGroup.MEMBER;
               return (
-                <tr key={face} className="border-b last:border-0">
-                  <td className="px-4 py-2.5 font-medium">{vnd(face)}</td>
+                <tr key={face} className="border-b border-orange-100 last:border-0">
+                  <td className="px-5 py-3 font-bold text-navy">{vnd(face)}</td>
                   {GROUPS.map((g) => (
-                    <td key={g.key} className="px-4 py-2.5">{byGroup[g.key] ? pct(byGroup[g.key]!.feeBps) : "—"}</td>
+                    <td key={g.key} className="px-5 py-3">{byGroup[g.key] ? pct(byGroup[g.key]!.feeBps) : "—"}</td>
                   ))}
-                  <td className="px-4 py-2.5 text-primary font-medium">
+                  <td className="px-5 py-3 text-sundeep font-bold">
                     {member ? vnd(Math.floor(face * (1 - member.feeBps / 10000))) : "—"}
                   </td>
                 </tr>
@@ -73,7 +73,7 @@ export default function FeeTable({ rows }: { rows: FeeRow[] }) {
           </tbody>
         </table>
       </div>
-      <p className="px-4 py-3 text-xs text-slate-500 bg-slate-50">
+      <p className="px-5 py-3 text-xs text-slate-500 bg-orange-50/60">
         Khai sai mệnh giá: tính theo mệnh giá thực tế và trừ thêm phí phạt {pct(penalty)} của mệnh giá nhỏ hơn.
         Phí áp dụng theo nhóm tài khoản của bạn tại thời điểm gạch thẻ.
       </p>
