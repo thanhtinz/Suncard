@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import type { SavedBank } from "./bank-accounts";
 
 function usePost(url: string) {
   const [msg, setMsg] = useState("");
@@ -45,16 +46,41 @@ export function TransferForm() {
     </form>
   );
 }
-export function WithdrawForm() {
+export function WithdrawForm({ banks = [] }: { banks?: SavedBank[] }) {
+  const def = banks.find((b) => b.isDefault) ?? banks[0];
   const [amount, setAmount] = useState("");
-  const [bank, setBank] = useState("");
-  const [account, setAccount] = useState("");
-  const [owner, setOwner] = useState("");
+  const [pickedId, setPickedId] = useState(def?.id ?? "");
+  const [bank, setBank] = useState(def?.bankName ?? "");
+  const [account, setAccount] = useState(def?.accountNumber ?? "");
+  const [owner, setOwner] = useState(def?.accountName ?? "");
   const { msg, busy, post } = usePost("/api/wallet/withdraw");
+
+  function pick(id: string) {
+    setPickedId(id);
+    const b = banks.find((x) => x.id === id);
+    if (b) { setBank(b.bankName); setAccount(b.accountNumber); setOwner(b.accountName); }
+    else { setBank(""); setAccount(""); setOwner(""); }
+  }
+
   return (
     <form className="card p-5 space-y-3" onSubmit={async (e) => { e.preventDefault(); await post({ amountMinor: Number(amount), bankInfo: { bankName: bank, accountNumber: account, accountName: owner } }); }}>
       <h3 className="font-bold text-navy">Rút tiền</h3>
       <div><label className="label">Số tiền (VND)</label><input type="number" min={50000} step={1000} className="input" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
+      {banks.length > 0 ? (
+        <div>
+          <label className="label">Ngân hàng đã lưu</label>
+          <select className="input" value={pickedId} onChange={(e) => pick(e.target.value)}>
+            {banks.map((b) => (
+              <option key={b.id} value={b.id}>{b.bankName} — {b.accountNumber}{b.isDefault ? " (mặc định)" : ""}</option>
+            ))}
+            <option value="">Nhập thông tin khác…</option>
+          </select>
+        </div>
+      ) : (
+        <div className="rounded-lg bg-amber-50 text-amber-700 px-3 py-2 text-sm">
+          Bạn chưa lưu ngân hàng nào. Cứ nhập thủ công lần này, hoặc thêm ngân hàng ở mục <b>Ngân hàng của tôi</b> bên dưới để lần sau chỉ cần chọn.
+        </div>
+      )}
       <div><label className="label">Ngân hàng</label><input className="input" value={bank} onChange={(e) => setBank(e.target.value)} required /></div>
       <div><label className="label">Số tài khoản</label><input className="input" value={account} onChange={(e) => setAccount(e.target.value)} required /></div>
       <div><label className="label">Chủ tài khoản</label><input className="input" value={owner} onChange={(e) => setOwner(e.target.value)} required /></div>

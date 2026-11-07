@@ -5,6 +5,8 @@ import { PageTitle, Money, DataTable, StatusBadge, Empty } from "@/components/ui
 import { DepositForm, TransferForm, WithdrawForm } from "./form";
 import VnpayDepositForm from "./vnpay-form";
 import { vnpayEnabled } from "@/modules/vnpay";
+import BankAccountsManager from "./bank-accounts";
+import { listSavedBanks, type SavedBankAccountRow } from "@/modules/saved-banks";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +22,12 @@ export default async function WalletPage({ searchParams }: { searchParams?: { pa
   const entries = accounts.length ? await prisma.ledgerEntry.findMany({ where: { accountId: { in: accounts.map((a) => a.id) } }, orderBy: { createdAt: "desc" }, skip: (page - 1) * take, take }) : [];
   const txs = entries.length ? await prisma.ledgerTransaction.findMany({ where: { id: { in: entries.map((e) => e.transactionId) } } }) : [];
   const txMap = new Map(txs.map((t) => [t.id, t]));
-  const [deposits, withdrawals] = await Promise.all([
+  const [deposits, withdrawals, savedBankRows] = await Promise.all([
     prisma.deposit.findMany({ where: { userId: uid }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.withdrawalRequest.findMany({ where: { userId: uid }, orderBy: { createdAt: "desc" }, take: 10 }),
+    listSavedBanks(uid).catch(() => []),
   ]);
+  const savedBanks = savedBankRows.map((b: SavedBankAccountRow) => ({ id: b.id, bankName: b.bankName, accountNumber: b.accountNumber, accountName: b.accountName, isDefault: b.isDefault }));
   return (
     <div>
       <PageTitle title="Ví của tôi" sub="Nạp, chuyển, rút và sao kê số dư" />
@@ -32,8 +36,10 @@ export default async function WalletPage({ searchParams }: { searchParams?: { pa
         <div className="card p-5"><div className="text-sm text-slate-500">Đang giữ</div><div className="text-2xl mt-1"><Money v={held?.balanceMinor ?? BigInt(0)} /></div></div>
       </div>
       <div className="grid md:grid-cols-3 gap-4 mb-8">
-        <DepositForm /><TransferForm /><WithdrawForm />
+        <DepositForm /><TransferForm /><WithdrawForm banks={savedBanks} />
       </div>
+      <h2 className="font-bold text-navy mb-3">Ngân hàng của tôi</h2>
+      <div className="mb-8"><BankAccountsManager initial={savedBanks} /></div>
       {(await vnpayEnabled()) && (
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <VnpayDepositForm />

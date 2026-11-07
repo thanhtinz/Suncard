@@ -732,6 +732,18 @@ model WithdrawalRequest {
   @@index([status])
   @@map("withdrawal_requests")
 }
+model SavedBankAccount {
+  id String @id @default(cuid())
+  userId String
+  bankName String
+  accountNumber String
+  accountName String
+  isDefault Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+  @@map("saved_bank_accounts")
+}
 model CreditAccount {
   id String @id @default(cuid())
   userId String @unique
