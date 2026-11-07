@@ -13,6 +13,12 @@ const TRUST = [
   { label: "9 nhà mạng & thẻ game", icon: <path d="M4 7h16M4 12h16M4 17h10" /> },
 ];
 
+const HIGHLIGHTS = [
+  { code: "VIETTEL", name: "Viettel" },
+  { code: "GARENA", name: "Garena" },
+  { code: "ZING", name: "Zing" },
+];
+
 const SERVICES = [
   {
     href: "/nap-game", title: "Nạp game", bg: "#FFF1E0",
@@ -87,6 +93,29 @@ export default async function HomePage({ searchParams }: { searchParams?: { code
             </div>
             <div className="mt-6 border border-dashed rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed max-w-[520px]" style={{ background: "rgba(255,255,255,.75)", borderColor: "#E8A15C", color: "#8a5a12" }}>
               Lưu ý: chỉ đổi thẻ có nguồn gốc hợp pháp. Sai mệnh giá được tính theo mệnh giá thực (trừ 50% mệnh giá nhỏ hơn); sai serial sẽ không được hỗ trợ khiếu nại.
+            </div>
+            <div className="mt-7 max-w-[520px]">
+              <div className="font-bold text-navy text-[15px] mb-3">Đổi thẻ trong 3 bước</div>
+              <div className="space-y-2.5">
+                {["Chọn loại thẻ và mệnh giá ở form bên cạnh", "Nhập số serial và mã thẻ (PIN)", "Tiền cộng vào ví sau khoảng 30 giây"].map((s, i) => (
+                  <div key={s} className="flex items-center gap-3 text-sm font-medium text-ink2">
+                    <span className="w-7 h-7 rounded-full bg-grad-sun text-white font-bold text-[13px] flex items-center justify-center shrink-0 shadow-sun">{i + 1}</span>{s}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-7 max-w-[520px] rounded-2xl px-4 py-2" style={{ background: "rgba(255,255,255,.75)" }}>
+              {HIGHLIGHTS.map((h) => {
+                const bps = memberFees[h.code]?.["100000"];
+                if (bps == null) return null;
+                const recv = Math.floor(100000 * (1 - bps / 10000));
+                return (
+                  <div key={h.code} className="flex items-center justify-between py-2 border-b border-orange-100 last:border-0 text-sm">
+                    <span className="font-semibold text-navy">Thẻ {h.name} 100.000₫</span>
+                    <span className="text-muted2">thực nhận <b className="text-sundeep">{recv.toLocaleString("vi-VN")}₫</b></span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <ExchangeForm loggedIn={!!session} memberFees={memberFees} />

@@ -47,9 +47,9 @@ export default function ExchangeForm({ loggedIn, memberFees }: { loggedIn: boole
   }
 
   const chip = (active: boolean) =>
-    `px-3.5 py-2 rounded-full border-2 text-sm font-semibold transition ${active ? "bg-grad-sun text-white border-transparent shadow-sun" : "border-sunline bg-white text-ink2 hover:border-sun2"}`;
+    `px-3 py-1.5 rounded-full border-2 text-[13px] font-semibold transition ${active ? "bg-grad-sun text-white border-transparent shadow-sun" : "border-sunline bg-white text-ink2 hover:border-sun2"}`;
   const chipMoney = (active: boolean) =>
-    `px-3.5 py-2 rounded-full border-2 text-sm font-semibold transition ${active ? "bg-navy text-white border-transparent" : "border-sunline bg-white text-ink2 hover:border-sun2"}`;
+    `px-3 py-1.5 rounded-full border-2 text-[13px] font-semibold transition ${active ? "bg-navy text-white border-transparent" : "border-sunline bg-white text-ink2 hover:border-sun2"}`;
 
   return (
     <form onSubmit={submit} className="bg-white rounded-[26px] p-6 md:p-7 shadow-sunsoft border border-white w-full">
@@ -92,7 +92,7 @@ export default function ExchangeForm({ loggedIn, memberFees }: { loggedIn: boole
       {!loggedIn && <div className="rounded-xl bg-amber-50 text-amber-700 px-3 py-2 text-sm mt-4">Bạn chưa đăng nhập. <a className="underline font-semibold" href="/dang-nhap">Đăng nhập</a> để gạch thẻ — tiền cộng vào ví của bạn.</div>}
       {msg && <div className="rounded-xl bg-orange-50 text-sundeep px-3 py-2 text-sm mt-4">{msg}</div>}
       <button className="btn-primary w-full !rounded-2xl !py-3.5 !text-[17px] mt-4" disabled={busy}>{busy ? "Đang gửi..." : "Gạch thẻ ngay"}</button>
-      <p className="text-xs text-muted2 text-center mt-2.5 leading-relaxed">Thực nhận tính theo phí nhóm Thành viên; tài khoản đại lý/API áp dụng phí nhóm của bạn khi gửi. Khai sai mệnh giá tính theo mệnh giá thực tế.</p>
+      <p className="text-xs text-muted2 text-center mt-2.5 leading-relaxed">Thực nhận theo phí Thành viên; đại lý/API áp phí nhóm của bạn khi gửi.</p>
     </form>
   );
 }
