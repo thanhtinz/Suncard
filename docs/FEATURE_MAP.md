@@ -63,9 +63,11 @@ login throttling) nằm trong suite `security` của `npm test`.
 - **Cổng thanh toán thật — Chưa làm:** nạp ví hiện dùng chuyển khoản thủ công
   (maker-checker) + **MockPay**. Cổng thanh toán thật (ngân hàng/ví điện tử/thẻ quốc tế)
   cần pháp lý + hợp đồng cổng, để giai đoạn sau.
-- **MFA TOTP — MFA-ready:** schema đã có field TOTP và các thao tác nhạy cảm
-  (reveal PIN, duyệt tiền) đã có step-up bằng mật khẩu; bước verify mã TOTP 6 số
-  để giai đoạn sau.
+- **MFA TOTP — Đã làm (sửa ghi chú cũ ngày 07/11/2026):** TOTP RFC 6238 đã chạy thật
+  và BẮT BUỘC cho mọi vai trò quản trị (chưa bật → không vào được /admin), đăng nhập
+  kèm mã TOTP, step-up bằng mật khẩu/TOTP cho thao tác nhạy cảm — bằng chứng:
+  smoke #8–#10 và test "SEC-AC-02 Admin MFA gate" / "login TOTP + DB session".
+  Phần còn lại của Phase 4 là Redis/worker nền và rate-limit phân tán.
 
 ## Lộ trình theo PRD (Phase 1–5)
 
@@ -76,7 +78,7 @@ login throttling) nằm trong suite `security` của `npm test`.
   bật routing đa nguồn theo dữ liệu thật, đối soát tự động theo lịch.
 - **Phase 3 — Thanh toán thật:** tích hợp cổng thanh toán/ví điện tử được cấp phép,
   payout rút tiền tự động, đối soát ngân hàng.
-- **Phase 4 — Bảo mật & quy mô:** MFA TOTP đầy đủ, Redis + worker nền cho webhook/queue,
+- **Phase 4 — Bảo mật & quy mô:** passkey/WebAuthn, Redis + worker nền cho webhook/queue,
   rate-limit phân tán, cảnh báo vận hành (alert UNKNOWN tồn đọng, circuit mở).
 - **Phase 5 — Mở rộng quốc tế:** đa tiền tệ/FX đầy đủ, region ngoài VN, gift card quốc tế,
   bản địa hoá giao diện.
