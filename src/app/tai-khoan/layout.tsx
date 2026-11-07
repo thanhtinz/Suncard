@@ -7,10 +7,9 @@ import { SideNav, type SideGroup } from "@/components/nav";
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession().catch(() => null);
   if (!session) redirect("/dang-nhap");
-  const [profile, avail, unread] = await Promise.all([
+  const [profile, avail] = await Promise.all([
     prisma.userProfile.findUnique({ where: { userId: session.userId } }).catch(() => null),
     prisma.ledgerAccount.findUnique({ where: { code: `WALLET:${session.userId}:AVAILABLE` } }).catch(() => null),
-    prisma.notification.count({ where: { userId: session.userId, readAt: null } }).catch(() => 0),
   ]);
   const displayName = profile?.fullName ?? session.email.split("@")[0];
   const initial = (displayName.trim().charAt(0) || "S").toUpperCase();
@@ -22,9 +21,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
       items: [
         { href: "/tai-khoan", label: "Tổng quan", icon: "grid" },
         { href: "/tai-khoan/don-hang", label: "Đơn hàng", icon: "receipt" },
-        { href: "/tai-khoan/doi-the", label: "Đổi thẻ", icon: "swap" },
         { href: "/tai-khoan/the-da-mua", label: "Thẻ đã mua", icon: "card" },
-        { href: "/tai-khoan/thong-bao", label: "Thông báo", icon: "bell", dot: unread > 0 },
       ],
     },
     { label: "Ví & tiền", items: [{ href: "/tai-khoan/vi", label: "Ví của tôi", icon: "wallet" }] },

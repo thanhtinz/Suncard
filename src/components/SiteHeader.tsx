@@ -61,7 +61,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
           <span className="text-lg sm:text-xl xl:text-[23px] font-extrabold tracking-tight text-navy">Sun<span className="text-grad-sun">Card</span></span>
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-0.5 mx-auto bg-white border border-[#F1E0C2] rounded-full p-[5px] shadow-[0_3px_12px_rgba(120,80,10,0.07)]" aria-label="Menu chính">
+        <nav className="hidden min-[1400px]:flex items-center gap-0.5 mx-auto bg-white border border-[#F1E0C2] rounded-full p-[5px] shadow-[0_3px_12px_rgba(120,80,10,0.07)]" aria-label="Menu chính">
           {NAV.map((n) => {
             const on = isActive(pathname, n.href);
             return (
@@ -87,10 +87,6 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </Link>
             </span>
             )}
-            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative hidden sm:flex w-[42px] h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] items-center justify-center text-ink2 hover:text-sundeep">
-              <NavIcon k="bell" size={19} />
-              {user.unread > 0 && <span className="absolute top-[9px] right-[10px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
-            </Link>
             {user.isStaff && (
               <Link href="/admin" className="hidden md:block text-sm font-semibold text-navy hover:text-sundeep">Admin</Link>
             )}
@@ -102,7 +98,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               </span>
             </Link>
             <form action="/api/auth/logout" method="post" className="hidden md:block">
-              <button className="btn-ghost !py-1.5 !px-3 text-[13px]" aria-label="Đăng xuất">Đăng xuất</button>
+              <button className="btn-ghost !py-1.5 !px-3 text-[13px] whitespace-nowrap" aria-label="Đăng xuất">Đăng xuất</button>
             </form>
           </>) : (<>
             <Link href="/dang-nhap" className="flex items-center gap-1.5 bg-white border-[1.5px] border-[#EFDCB8] rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-[13px] sm:text-sm font-bold text-navy whitespace-nowrap hover:border-[#FFB03A]">
@@ -114,8 +110,14 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
               <svg className="hidden sm:block" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </Link>
           </>)}
+          {user && (
+            <Link href="/tai-khoan/thong-bao" aria-label="Thông báo" className="relative w-[39px] h-[39px] xl:w-[42px] xl:h-[42px] rounded-full bg-white border-[1.5px] border-[#F1E0C2] flex items-center justify-center text-ink2 hover:text-sundeep shrink-0">
+              <NavIcon k="bell" size={19} />
+              {user.unread > 0 && <span className="absolute top-[8px] right-[9px] w-2 h-2 rounded-full bg-[#F04B3A] border-2 border-white" />}
+            </Link>
+          )}
           <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Đóng menu" : "Mở menu"} aria-expanded={open}
-            className={`xl:hidden w-[39px] h-[39px] rounded-xl border-[1.5px] flex items-center justify-center shrink-0 ${open ? "bg-navy border-navy text-white" : "bg-white border-[#F1E0C2] text-navy"}`}>
+            className={`min-[1400px]:hidden w-[39px] h-[39px] rounded-xl border-[1.5px] flex items-center justify-center shrink-0 ${open ? "bg-navy border-navy text-white" : "bg-white border-[#F1E0C2] text-navy"}`}>
             {open
               ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
               : <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h10" /></svg>}
@@ -123,7 +125,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
         </div>
 
         {open && (
-          <div className="xl:hidden absolute inset-x-0 top-full px-3 sm:px-4 pb-3">
+          <div className="min-[1400px]:hidden absolute inset-x-0 top-full px-3 sm:px-4 pb-3">
             <div className="bg-white rounded-[24px] border border-[#F1E0C2] shadow-[0_24px_34px_rgba(90,60,5,0.14)] p-4 max-h-[76vh] overflow-y-auto">
               {user && (
                 <div className="flex items-center gap-3 pb-3.5 mb-3.5 border-b border-[#F7EDD8]">
@@ -163,19 +165,6 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                   </Link>
                 ))}
                 {user && (<>
-                  <Link href="/tai-khoan" className="flex items-center gap-3 py-3 border-t border-[#F7EDD8]">
-                    <span className="w-[34px] h-[34px] rounded-[11px] bg-[#FFF3DF] text-sundeep flex items-center justify-center shrink-0"><NavIcon k="user" size={17} /></span>
-                    <span className="text-sm font-bold text-navy">Tài khoản của tôi</span>
-                    <svg className="ml-auto shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9B48A" strokeWidth="2.4" strokeLinecap="round"><path d="M9 6l6 6-6 6" /></svg>
-                  </Link>
-                  <Link href="/tai-khoan/thong-bao" className="flex items-center gap-3 py-3 border-t border-[#F7EDD8]">
-                    <span className="relative w-[34px] h-[34px] rounded-[11px] bg-[#FFF3DF] text-sundeep flex items-center justify-center shrink-0">
-                      <NavIcon k="bell" size={17} />
-                      {user.unread > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F04B3A]" />}
-                    </span>
-                    <span className="text-sm font-bold text-navy">Thông báo</span>
-                    <svg className="ml-auto shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9B48A" strokeWidth="2.4" strokeLinecap="round"><path d="M9 6l6 6-6 6" /></svg>
-                  </Link>
                   <form action="/api/auth/logout" method="post" className="border-t border-[#F7EDD8]">
                     <button className="flex w-full items-center gap-3 py-3 text-left">
                       <span className="w-[34px] h-[34px] rounded-[11px] bg-red-50 text-red-500 flex items-center justify-center shrink-0">
