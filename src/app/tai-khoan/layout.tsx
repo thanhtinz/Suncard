@@ -21,6 +21,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
       items: [
         { href: "/tai-khoan", label: "Tổng quan", icon: "grid" },
         { href: "/tai-khoan/don-hang", label: "Đơn hàng", icon: "receipt" },
+        { href: "/tra-cuu", label: "Lịch sử đổi thẻ", icon: "clock" },
         { href: "/tai-khoan/the-da-mua", label: "Thẻ đã mua", icon: "card" },
       ],
     },

@@ -45,11 +45,11 @@ export function SunMark({ size = 34 }: { size?: number }) {
 
 const NAV = [
   { href: "/", label: "Đổi thẻ", icon: "swap" },
-  { href: "/tra-cuu", label: "Lịch sử", icon: "clock" },
   { href: "/nap-game", label: "Nạp game", icon: "gamepad" },
   { href: "/cua-hang-the", label: "Mua thẻ", icon: "card" },
   { href: "/dai-ly", label: "Đại lý", icon: "store" },
   { href: "/tai-lieu", label: "Tài liệu", icon: "file" },
+  { href: "/bai-viet", label: "Bài viết", icon: "book" },
   { href: "/tro-giup", label: "Hỗ trợ", icon: "headset" },
 ];
 
@@ -57,12 +57,12 @@ const TILES = [
   { href: "/", label: "Đổi thẻ", icon: "swap" },
   { href: "/nap-game", label: "Nạp game", icon: "gamepad" },
   { href: "/cua-hang-the", label: "Mua thẻ", icon: "card" },
-  { href: "/tra-cuu", label: "Lịch sử", icon: "clock" },
 ];
 
 const ROWS = [
   { href: "/dai-ly", label: "Đại lý & đối tác", desc: "Chính sách hoa hồng, đăng ký mở đại lý", icon: "store" },
-  { href: "/tai-lieu", label: "Tài liệu API", desc: "Tích hợp đổi thẻ & nạp game tự động", icon: "file" },
+  { href: "/tai-lieu", label: "Tài liệu", desc: "Tài liệu API & tài liệu cho đại lý, đối tác", icon: "file" },
+  { href: "/bai-viet", label: "Bài viết & hướng dẫn", desc: "Hướng dẫn sử dụng, thông báo & kiến thức", icon: "book" },
   { href: "/tro-giup", label: "Trung tâm hỗ trợ", desc: "Giải đáp & gửi yêu cầu 24/7", icon: "headset" },
 ];
 
@@ -179,7 +179,7 @@ export default function SiteHeader({ user }: { user: HeaderUser | null }) {
                 </div>
               )}
               <div className="text-[11px] font-extrabold tracking-[0.15em] uppercase text-[#B39B6B] px-0.5 mb-2.5">Dịch vụ</div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {TILES.map((n) => {
                   const on = isActive(pathname, n.href);
                   return (

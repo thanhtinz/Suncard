@@ -14,16 +14,11 @@ export default async function DocsHubPage() {
   return (
     <div>
       <PageTitle title="Tài liệu" sub="Tài liệu tích hợp API và tài liệu dành cho đại lý, đối tác" />
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="mb-6">
         <Link href="/tai-lieu/api" className="card !rounded-[22px] p-6 block hover:shadow-md transition">
           <div className="font-extrabold text-navy text-lg">Tài liệu API</div>
           <p className="text-sm text-slate-500 mt-1.5 leading-6">Hướng dẫn tích hợp 4 module: Đổi thẻ cào (Charging), Nạp topup (Recharge), Mua mã thẻ (Softcard) và REST API v1 ký HMAC — kèm công thức sign và code mẫu 5 ngôn ngữ.</p>
           <span className="text-sm text-sundeep font-semibold mt-2 inline-block">Xem tài liệu API →</span>
-        </Link>
-        <Link href="/bai-viet" className="card !rounded-[22px] p-6 block hover:shadow-md transition">
-          <div className="font-extrabold text-navy text-lg">Bài viết & hướng dẫn</div>
-          <p className="text-sm text-slate-500 mt-1.5 leading-6">Hướng dẫn sử dụng dịch vụ, thông báo và kiến thức về thẻ cào, nạp game dành cho mọi người dùng.</p>
-          <span className="text-sm text-sundeep font-semibold mt-2 inline-block">Đọc bài viết →</span>
         </Link>
       </div>
       {docs.length > 0 && (
