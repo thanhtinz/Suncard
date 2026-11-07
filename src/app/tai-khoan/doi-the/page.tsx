@@ -16,7 +16,7 @@ export default async function MyExchangePage({ searchParams }: { searchParams?: 
   const exMap = new Map(exs.map((e) => [e.orderId, e]));
   return (
     <div>
-      <PageTitle title="Đổi thẻ của tôi" sub="Lịch sử gạch thẻ sang số dư ví" action={<Link href="/doi-the" className="btn-primary">Gạch thẻ mới</Link>} />
+      <PageTitle title="Đổi thẻ của tôi" sub="Lịch sử gạch thẻ sang số dư ví" action={<Link href="/" className="btn-primary">Gạch thẻ mới</Link>} />
       <DataTable cols={["Mã đơn", "Nhà mạng", "Serial", "Mệnh giá", "Thực nhận", "Trạng thái", "Thời gian"]} rows={orders.map((o) => {
         const ex = exMap.get(o.id);
         return [o.code, ex?.carrier ?? "", ex?.serialMasked ?? "", ex ? <Money key="f" v={ex.faceValueMinor} /> : "", ex?.payoutMinor != null ? <Money key="p" v={ex.payoutMinor} /> : "—", <StatusBadge key="s" status={o.status} />, o.createdAt.toLocaleString("vi-VN")];
