@@ -3,17 +3,11 @@ import { headers } from "next/headers";
 import { getSession } from "@/modules/security";
 import { prisma } from "@/lib/prisma";
 import { getSetting } from "@/modules/settings";
-import { NavLink } from "@/components/ui";
+import { SideNav, type SideGroup } from "@/components/nav";
+import { SunMark } from "@/components/SiteHeader";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT", "PRODUCT_MANAGER", "PROVIDER_MANAGER", "RISK", "AUDITOR"];
-const LINKS: [string, string][] = [
-  ["/admin", "Tổng quan"], ["/admin/nguoi-dung", "Người dùng"], ["/admin/dai-ly", "Đại lý"], ["/admin/san-pham", "Sản phẩm"],
-  ["/admin/kho-the", "Kho thẻ"], ["/admin/doi-the", "Đổi thẻ"], ["/admin/don-nap", "Đơn nạp"], ["/admin/nha-cung-cap", "Nhà cung cấp"],
-  ["/admin/dinh-gia", "Định giá"], ["/admin/vi-ledger", "Ví & Ledger"], ["/admin/tai-chinh", "Tài chính"], ["/admin/cong-no", "Công nợ"],
-  ["/admin/hoa-hong", "Hoa hồng"], ["/admin/tranh-chap", "Tranh chấp"], ["/admin/doi-soat", "Đối soát"], ["/admin/bao-cao", "Báo cáo"],
-  ["/admin/tai-lieu", "Tài liệu"], ["/admin/phan-quyen", "Phân quyền"], ["/admin/nhat-ky", "Nhật ký"], ["/admin/rui-ro", "Hàng chờ rủi ro"], ["/admin/cai-dat", "Cài đặt"],
-  ["/admin/api-clients", "API Clients"],
-];
+const ROLE_LINE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", OPS: "Vận hành", FINANCE: "Tài chính", SUPPORT: "Hỗ trợ", PRODUCT_MANAGER: "Sản phẩm", PROVIDER_MANAGER: "Nhà cung cấp", RISK: "Rủi ro", AUDITOR: "Kiểm toán" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession().catch(() => null);
@@ -28,17 +22,81 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const ip = headers().get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
     if (!allowlist.includes(ip)) redirect("/tai-khoan?admin_ip_blocked=1");
   }
+  const riskPending = await prisma.riskReview.count({ where: { status: "PENDING" } }).catch(() => 0);
+  const groups: SideGroup[] = [
+    {
+      label: "Tổng quan",
+      items: [
+        { href: "/admin", label: "Tổng quan", icon: "grid" },
+        { href: "/admin/bao-cao", label: "Báo cáo", icon: "chart" },
+      ],
+    },
+    {
+      label: "Vận hành",
+      items: [
+        { href: "/admin/doi-the", label: "Đổi thẻ", icon: "swap" },
+        { href: "/admin/don-nap", label: "Đơn nạp", icon: "download" },
+        { href: "/admin/kho-the", label: "Kho thẻ", icon: "layers" },
+        { href: "/admin/san-pham", label: "Sản phẩm", icon: "box" },
+        { href: "/admin/dinh-gia", label: "Định giá", icon: "tag" },
+        { href: "/admin/nha-cung-cap", label: "Nhà cung cấp", icon: "server" },
+      ],
+    },
+    {
+      label: "Khách hàng",
+      items: [
+        { href: "/admin/nguoi-dung", label: "Người dùng", icon: "users" },
+        { href: "/admin/dai-ly", label: "Đại lý", icon: "store" },
+        { href: "/admin/api-clients", label: "API Clients", icon: "code" },
+      ],
+    },
+    {
+      label: "Tài chính",
+      items: [
+        { href: "/admin/vi-ledger", label: "Ví & Ledger", icon: "book" },
+        { href: "/admin/tai-chinh", label: "Tài chính", icon: "trend" },
+        { href: "/admin/cong-no", label: "Công nợ", icon: "clock" },
+        { href: "/admin/hoa-hong", label: "Hoa hồng", icon: "percent" },
+        { href: "/admin/doi-soat", label: "Đối soát", icon: "reconcile" },
+      ],
+    },
+    {
+      label: "Hệ thống",
+      items: [
+        { href: "/admin/tranh-chap", label: "Tranh chấp", icon: "flag" },
+        { href: "/admin/rui-ro", label: "Hàng chờ rủi ro", icon: "alert", dot: riskPending > 0 },
+        { href: "/admin/phan-quyen", label: "Phân quyền", icon: "lock" },
+        { href: "/admin/nhat-ky", label: "Nhật ký", icon: "list" },
+        { href: "/admin/tai-lieu", label: "Tài liệu", icon: "file" },
+        { href: "/admin/cai-dat", label: "Cài đặt", icon: "gear" },
+      ],
+    },
+  ];
+  const roleChip = (cls: string) => (
+    <span className={`inline-block mt-1 text-[10.5px] font-extrabold tracking-[0.05em] uppercase text-sundeep bg-[#FFEEDA] px-2 py-[3px] rounded-full ${cls}`}>{session.roles.map((r) => ROLE_LINE[r] ?? r).join(" · ")}</span>
+  );
+  const profileDesktop = (
+    <div className="flex items-center gap-3 px-2 pt-1.5 pb-3.5 border-b border-[#F7EDD8] mb-1.5">
+      <SunMark size={42} />
+      <span className="min-w-0">
+        <span className="block text-[13.5px] font-extrabold text-navy truncate">Quản trị SunCard</span>
+        {roleChip("")}
+      </span>
+    </div>
+  );
+  const profileMobile = (
+    <div className="bg-white border-[1.5px] border-[#F3E5C8] rounded-[18px] p-3.5 flex items-center gap-3 shadow-[0_5px_16px_rgba(120,80,10,0.06)]">
+      <SunMark size={42} />
+      <span className="min-w-0">
+        <span className="block text-[13.5px] font-extrabold text-navy truncate">Quản trị SunCard</span>
+        {roleChip("")}
+      </span>
+    </div>
+  );
   return (
-    <div className="grid md:grid-cols-[220px_1fr] gap-6 items-start">
-      <aside className="card p-3 md:sticky md:top-20 max-h-[85vh] overflow-y-auto">
-        <div className="px-3 py-2">
-          <div className="font-semibold text-sm">Quản trị SunCard</div>
-          <div className="text-xs text-slate-500 truncate">{session.email}</div>
-          <div className="text-xs text-slate-400">{session.roles.join(", ")}</div>
-        </div>
-        {LINKS.map(([href, label]) => <NavLink key={href} href={href}>{label}</NavLink>)}
-      </aside>
-      <div className="min-w-0">{children}</div>
+    <div className="md:flex md:gap-6 md:items-start">
+      <SideNav profile={profileDesktop} mobileProfile={profileMobile} groups={groups} />
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }

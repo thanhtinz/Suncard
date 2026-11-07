@@ -1,70 +1,39 @@
 import "./globals.css";
 import Link from "next/link";
 import { getSession } from "@/modules/security";
+import { prisma } from "@/lib/prisma";
+import SiteHeader, { SunMark, type HeaderUser } from "@/components/SiteHeader";
 
 export const metadata = { title: "SunCard — Đổi thẻ cào, nạp game, mua thẻ số", description: "Đổi thẻ cào lấy tiền ví, nạp game, mua thẻ — phí minh bạch, xử lý tự động 24/7." };
 
-function SunMark({ size = 34 }: { size?: number }) {
-  return (
-    <span className="inline-flex items-center justify-center rounded-full bg-grad-sun shadow-sun shrink-0" style={{ width: size, height: size }}>
-      <svg width={size * 0.58} height={size * 0.58} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#fff" /><g stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" /></g></svg>
-    </span>
-  );
-}
-
-const NAV = [
-  { href: "/", label: "Đổi thẻ" },
-  { href: "/tra-cuu", label: "Tra cứu" },
-  { href: "/nap-game", label: "Nạp game" },
-  { href: "/cua-hang-the", label: "Mua thẻ" },
-  { href: "/dai-ly", label: "Đại lý" },
-  { href: "/tai-lieu", label: "Tài liệu" },
-  { href: "/tro-giup", label: "Hỗ trợ" },
-];
+const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT"];
+const ROLE_LINE: Record<string, string> = { SUPER_ADMIN: "Super Admin", ADMIN: "Admin", OPS: "Vận hành", FINANCE: "Tài chính", SUPPORT: "Hỗ trợ", PRODUCT_MANAGER: "Sản phẩm", PROVIDER_MANAGER: "Nhà cung cấp", RISK: "Rủi ro", AUDITOR: "Kiểm toán" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession().catch(() => null);
-  const isStaff = session?.roles.some((r) => ["SUPER_ADMIN", "ADMIN", "OPS", "FINANCE", "SUPPORT"].includes(r));
+  const isStaff = !!session?.roles.some((r) => STAFF_ROLES.includes(r));
+  let headerUser: HeaderUser | null = null;
+  if (session) {
+    const [profile, avail, unread] = await Promise.all([
+      prisma.userProfile.findUnique({ where: { userId: session.userId } }).catch(() => null),
+      prisma.ledgerAccount.findUnique({ where: { code: `WALLET:${session.userId}:AVAILABLE` } }).catch(() => null),
+      prisma.notification.count({ where: { userId: session.userId, readAt: null } }).catch(() => 0),
+    ]);
+    const displayName = profile?.fullName ?? session.email.split("@")[0];
+    headerUser = {
+      email: session.email,
+      displayName,
+      initial: (displayName.trim().charAt(0) || "S").toUpperCase(),
+      roleLine: isStaff ? (ROLE_LINE[session.roles[0]] ?? session.roles[0]) : "Thành viên",
+      isStaff,
+      balance: `${Number(avail?.balanceMinor ?? BigInt(0)).toLocaleString("vi-VN")}₫`,
+      unread,
+    };
+  }
   return (
     <html lang="vi">
       <body>
-        <header className="sticky top-0 z-40 border-b border-sunline" style={{ background: "rgba(255,249,241,.92)", backdropFilter: "blur(8px)" }}>
-          <div className="mx-auto max-w-7xl px-4 h-16 flex items-center gap-2.5 sm:gap-5">
-            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 font-extrabold text-lg sm:text-xl text-navy tracking-tight">
-              <SunMark /> SunCard
-            </Link>
-            <nav className="hidden md:flex gap-5 text-[15px] font-semibold text-ink2 ml-2">
-              {NAV.map((n) => (
-                <Link key={n.href} href={n.href} className="hover:text-sundeep py-1">{n.label}</Link>
-              ))}
-            </nav>
-            <div className="ml-auto flex items-center gap-2 sm:gap-2.5 text-sm">
-              {session ? (<>
-                <Link href="/tai-khoan" className="hidden sm:block font-semibold text-navy hover:text-sundeep max-w-[180px] truncate">{session.email}</Link>
-                {isStaff && <Link href="/admin" className="font-semibold text-navy hover:text-sundeep">Admin</Link>}
-                <form action="/api/auth/logout" method="post"><button className="btn-ghost !py-1.5">Đăng xuất</button></form>
-              </>) : (<>
-                <Link href="/dang-nhap" className="btn-ghost !py-2 !px-2.5 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm">Đăng nhập</Link>
-                <Link href="/dang-ky" className="btn-primary !py-2 !px-2.5 sm:!px-4 whitespace-nowrap text-[13px] sm:text-sm">Đăng ký</Link>
-              </>)}
-            </div>
-            <details className="md:hidden relative shrink-0">
-              <summary className="list-none cursor-pointer p-2 -m-1 text-navy [&::-webkit-details-marker]:hidden" aria-label="Mở menu">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-              </summary>
-              <nav className="absolute right-0 top-10 w-56 bg-white text-navy rounded-2xl shadow-sunsoft border border-sunline p-2 text-sm z-50">
-                {NAV.map((n) => (
-                  <Link key={n.href} href={n.href} className="block px-3 py-2 rounded-lg hover:bg-orange-50">{n.label}</Link>
-                ))}
-                {session && <Link href="/tai-khoan" className="block px-3 py-2 rounded-lg hover:bg-orange-50 font-medium">Tài khoản của tôi</Link>}
-                {!session && (<>
-                  <Link href="/dang-nhap" className="block px-3 py-2 rounded-lg hover:bg-orange-50 font-medium border-t border-sunline mt-1 pt-3">Đăng nhập</Link>
-                  <Link href="/dang-ky" className="block px-3 py-2 rounded-lg hover:bg-orange-50 font-medium">Đăng ký</Link>
-                </>)}
-              </nav>
-            </details>
-          </div>
-        </header>
+        <SiteHeader user={headerUser} />
         <main className="mx-auto max-w-7xl px-4 py-6 min-h-[70vh] w-full">{children}</main>
         <footer className="bg-navy text-slate-300 mt-12">
           <div className="mx-auto max-w-7xl px-4 py-10 grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-8 text-sm">

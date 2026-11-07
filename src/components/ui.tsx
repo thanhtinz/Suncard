@@ -32,6 +32,4 @@ export function DataTable({ cols, rows }: { cols: string[]; rows: React.ReactNod
     <tbody>{rows.map((r, i) => <tr key={i}>{r.map((cell, j) => <td key={j}>{cell}</td>)}</tr>)}</tbody></table></div>
   );
 }
-export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return <Link href={href} className="block rounded-lg px-3 py-2 text-sm hover:bg-blue-50 hover:text-primary">{children}</Link>;
-}
+
